@@ -19,7 +19,7 @@ import radarr
 import sonarr
 import settings
 
-__version__ = "1.0.0"
+__version__ = "1.1.0"
 
 DBPATH = os.path.join(os.path.dirname(os.path.realpath(__file__)), "data")
 DBFILE = "searcharr.db"
@@ -115,15 +115,12 @@ class Searcharr(object):
             reply_message, reply_markup = self._prepare_response(
                 "movie", r, cid, 0, len(results)
             )
-            if r["remotePoster"]:
-                context.bot.sendPhoto(
-                    chat_id=update.message.chat.id,
-                    photo=r["remotePoster"],
-                    caption=reply_message,
-                    reply_markup=reply_markup,
-                )
-            else:
-                update.message.reply_text(reply_message, reply_markup=reply_markup)
+            context.bot.sendPhoto(
+                chat_id=update.message.chat.id,
+                photo=r["remotePoster"],
+                caption=reply_message,
+                reply_markup=reply_markup,
+            )
 
     def cmd_series(self, update, context):
         logger.debug(f"Received series cmd from [{update.message.from_user.username}]")
@@ -158,15 +155,12 @@ class Searcharr(object):
             reply_message, reply_markup = self._prepare_response(
                 "series", r, cid, 0, len(results)
             )
-            if r["remotePoster"]:
-                context.bot.sendPhoto(
-                    chat_id=update.message.chat.id,
-                    photo=r["remotePoster"],
-                    caption=reply_message,
-                    reply_markup=reply_markup,
-                )
-            else:
-                update.message.reply_text(reply_message, reply_markup=reply_markup)
+            context.bot.sendPhoto(
+                chat_id=update.message.chat.id,
+                photo=r["remotePoster"],
+                caption=reply_message,
+                reply_markup=reply_markup,
+            )
 
     def callback(self, update, context):
         query = update.callback_query
@@ -209,14 +203,8 @@ class Searcharr(object):
             reply_message, reply_markup = self._prepare_response(
                 convo["type"], r, cid, i - 1, len(convo["results"])
             )
-            poster = (
-                r["remotePoster"]
-                if r["remotePoster"]
-                else "https://artworks.thetvdb.com/banners/images/missing/movie.jpg"
-            )
             query.message.edit_media(
-                media=InputMediaPhoto(poster),
-                caption=reply_message,
+                media=InputMediaPhoto(r["remotePoster"]),
                 reply_markup=reply_markup,
             )
             query.bot.edit_message_caption(
@@ -233,14 +221,8 @@ class Searcharr(object):
             reply_message, reply_markup = self._prepare_response(
                 convo["type"], r, cid, i + 1, len(convo["results"])
             )
-            poster = (
-                r["remotePoster"]
-                if r["remotePoster"]
-                else "https://artworks.thetvdb.com/banners/images/missing/movie.jpg"
-            )
             query.message.edit_media(
-                media=InputMediaPhoto(poster),
-                caption=reply_message,
+                media=InputMediaPhoto(r["remotePoster"]),
                 reply_markup=reply_markup,
             )
             query.bot.edit_message_caption(
@@ -268,14 +250,8 @@ class Searcharr(object):
                     add=True,
                     paths=paths,
                 )
-                poster = (
-                    r["remotePoster"]
-                    if r["remotePoster"]
-                    else "https://artworks.thetvdb.com/banners/images/missing/movie.jpg"
-                )
                 query.message.edit_media(
-                    media=InputMediaPhoto(poster),
-                    caption=reply_message,
+                    media=InputMediaPhoto(r["remotePoster"]),
                     reply_markup=reply_markup,
                 )
                 query.bot.edit_message_caption(

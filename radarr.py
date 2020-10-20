@@ -32,7 +32,7 @@ class Radarr(object):
                 "overview": x.get("overview", "No overview available."),
                 "status": x.get("status", "Unknown Status"),
                 "inCinemas": x.get("inCinemas"),
-                "remotePoster": x.get("remotePoster"),
+                "remotePoster": x.get("remotePoster", "https://artworks.thetvdb.com/banners/images/missing/movie.jpg"),
                 "year": x.get("year"),
                 "tmdbId": x.get("tmdbId"),
                 "imdbId": x.get("imdbId", None),

@@ -33,7 +33,7 @@ class Sonarr(object):
                 "status": x.get("status", "Unknown Status"),
                 "overview": x.get("overview", "Overview not available."),
                 "network": x.get("network"),
-                "remotePoster": x.get("remotePoster"),
+                "remotePoster": x.get("remotePoster", "https://artworks.thetvdb.com/banners/images/missing/movie.jpg"),
                 "year": x.get("year"),
                 "tvdbId": x.get("tvdbId"),
                 "seriesType": x.get("seriesType"),
