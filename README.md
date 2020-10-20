@@ -46,7 +46,7 @@ Send the bot a (private or group) message saying `/series <title>` or `/movie <t
 
 ## Screenshots
 
-### Authenticate:
+Authenticate by saying `/start <password>` (or `/start@bot_username <password>` in a group with multiple bots)
 
 ![Authenticate](https://github.com/toddrob99/searcharr/blob/main/screenshots/authenticate.png?raw=true)
 
@@ -54,7 +54,7 @@ Search for movie using `/movie <title>` or series using `/series <title>` (behav
 
 ![Search Result](https://github.com/toddrob99/searcharr/blob/main/screenshots/add.png?raw=true)
 
-If series/movie already exists in Sonarr/Radarr, the Add button will instead say "Already Exists!":
+If series/movie already exists in Sonarr/Radarr, the Add button will instead say "Already Added!":
 
 ![Already Exists](https://github.com/toddrob99/searcharr/blob/main/screenshots/already-exists.png?raw=true)
 
