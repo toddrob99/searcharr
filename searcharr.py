@@ -19,7 +19,7 @@ import radarr
 import sonarr
 import settings
 
-__version__ = "1.1.0"
+__version__ = "1.1.1"
 
 DBPATH = os.path.join(os.path.dirname(os.path.realpath(__file__)), "data")
 DBFILE = "searcharr.db"
@@ -74,7 +74,7 @@ class Searcharr(object):
         if password == settings.searcharr_password:
             self._add_user(
                 id=update.message.from_user.id,
-                username=update.message.from_user.username,
+                username=str(update.message.from_user.username),
             )
             update.message.reply_text(
                 "Authentication successful. Use /help for commands."
@@ -103,7 +103,7 @@ class Searcharr(object):
         # self.conversations.update({cid: {"cid": cid, "type": "movie", "results": results}})
         self._create_conversation(
             id=cid,
-            username=update.message.from_user.username,
+            username=str(update.message.from_user.username),
             kind="movie",
             results=results,
         )
@@ -143,7 +143,7 @@ class Searcharr(object):
         # self.conversations.update({cid: {"cid": cid, "type": "series", "results": results}})
         self._create_conversation(
             id=cid,
-            username=update.message.from_user.username,
+            username=str(update.message.from_user.username),
             kind="series",
             results=results,
         )
