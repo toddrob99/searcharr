@@ -26,4 +26,4 @@ radarr_api_key = ""
 radarr_quality_profile_id = 1
 radarr_add_monitored = True
 radarr_search_on_add = True
-radarr_api_version = 1  # 3 for new Aphrodite version - not supported yet
+radarr_api_version = 1  # v3 api not yet available -- use 1 even for aphrodite
