@@ -15,7 +15,7 @@ tgram_token = ""
 sonarr_enabled = True
 sonarr_url = ""  # http://192.168.0.100:8989
 sonarr_api_key = ""
-sonarr_quality_profile_id = 1
+sonarr_quality_profile_id = "HD 720p"  # can be name or id value
 sonarr_add_monitored = True
 sonarr_search_on_add = True
 
@@ -23,7 +23,7 @@ sonarr_search_on_add = True
 radarr_enabled = True
 radarr_url = ""  # http://192.168.0.100:7878
 radarr_api_key = ""
-radarr_quality_profile_id = 1
+radarr_quality_profile_id = "HD-720p"  # can be name or id value
 radarr_add_monitored = True
 radarr_search_on_add = True
 radarr_api_version = 1  # v3 api not yet available -- use 1 even for aphrodite

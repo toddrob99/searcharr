@@ -33,7 +33,10 @@ class Sonarr(object):
                 "status": x.get("status", "Unknown Status"),
                 "overview": x.get("overview", "Overview not available."),
                 "network": x.get("network"),
-                "remotePoster": x.get("remotePoster", "https://artworks.thetvdb.com/banners/images/missing/movie.jpg"),
+                "remotePoster": x.get(
+                    "remotePoster",
+                    "https://artworks.thetvdb.com/banners/images/missing/movie.jpg",
+                ),
                 "year": x.get("year"),
                 "tvdbId": x.get("tvdbId"),
                 "seriesType": x.get("seriesType"),
@@ -104,6 +107,15 @@ class Sonarr(object):
             }
             for x in r
         ]
+
+    def lookup_quality_profile_id(self, v):
+        # Look up quality profile id from a profile name,
+        # Or validate existence of a quality profile id
+        r = self._api_get("profile", {})
+        if not r:
+            return 0
+
+        return next((x["id"] for x in r if v in [x["name"], x["id"]]), 0)
 
     def _api_get(self, endpoint, params={}):
         url = self.api_url.format(endpoint=endpoint)

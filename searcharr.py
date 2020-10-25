@@ -19,7 +19,7 @@ import radarr
 import sonarr
 import settings
 
-__version__ = "1.1.1"
+__version__ = "1.2.0"
 
 DBPATH = os.path.join(os.path.dirname(os.path.realpath(__file__)), "data")
 DBFILE = "searcharr.db"
@@ -56,11 +56,43 @@ class Searcharr(object):
             if settings.sonarr_enabled
             else None
         )
+        if self.sonarr:
+            logger.debug(
+                f"Looking up Sonarr quality profile id for [{settings.sonarr_quality_profile_id}]..."
+            )
+            foundId = self.sonarr.lookup_quality_profile_id(
+                settings.sonarr_quality_profile_id
+            )
+            if foundId == 0:
+                logger.error(
+                    f"Sonarr quality profile provided in settings [{settings.sonarr_quality_profile_id}] is invalid!"
+                )
+            else:
+                settings.sonarr_quality_profile_id = foundId
+                logger.debug(
+                    f"Found Sonarr quality profile id: [{settings.sonarr_quality_profile_id}]"
+                )
         self.radarr = (
             radarr.Radarr(settings.radarr_url, settings.radarr_api_key, args.verbose)
             if settings.radarr_enabled
             else None
         )
+        if self.radarr:
+            logger.debug(
+                f"Looking up Radarr quality profile id for [{settings.radarr_quality_profile_id}]..."
+            )
+            foundId = self.radarr.lookup_quality_profile_id(
+                settings.radarr_quality_profile_id
+            )
+            if foundId == 0:
+                logger.error(
+                    f"Radarr quality profile provided in settings [{settings.radarr_quality_profile_id}] is invalid!"
+                )
+            else:
+                settings.radarr_quality_profile_id = foundId
+                logger.debug(
+                    f"Found Radarr quality profile id: [{settings.radarr_quality_profile_id}]"
+                )
         self.conversations = {}
 
     def cmd_start(self, update, context):
@@ -204,8 +236,7 @@ class Searcharr(object):
                 convo["type"], r, cid, i - 1, len(convo["results"])
             )
             query.message.edit_media(
-                media=InputMediaPhoto(r["remotePoster"]),
-                reply_markup=reply_markup,
+                media=InputMediaPhoto(r["remotePoster"]), reply_markup=reply_markup,
             )
             query.bot.edit_message_caption(
                 chat_id=query.message.chat_id,
@@ -222,8 +253,7 @@ class Searcharr(object):
                 convo["type"], r, cid, i + 1, len(convo["results"])
             )
             query.message.edit_media(
-                media=InputMediaPhoto(r["remotePoster"]),
-                reply_markup=reply_markup,
+                media=InputMediaPhoto(r["remotePoster"]), reply_markup=reply_markup,
             )
             query.bot.edit_message_caption(
                 chat_id=query.message.chat_id,
@@ -251,8 +281,7 @@ class Searcharr(object):
                     paths=paths,
                 )
                 query.message.edit_media(
-                    media=InputMediaPhoto(r["remotePoster"]),
-                    reply_markup=reply_markup,
+                    media=InputMediaPhoto(r["remotePoster"]), reply_markup=reply_markup,
                 )
                 query.bot.edit_message_caption(
                     chat_id=query.message.chat_id,
@@ -278,6 +307,8 @@ class Searcharr(object):
                             monitored=settings.radarr_add_monitored,
                             search=settings.radarr_search_on_add,
                         )
+                    else:
+                        added = False
                 except Exception as e:
                     logger.error(f"Error adding {convo['type']}: {e}")
                     added = False
@@ -292,24 +323,35 @@ class Searcharr(object):
             else:
                 self._delete_conversation(cid)
                 query.message.reply_text(
-                    "Error adding series: no root folders found in Sonarr! Please check your configuration in Sonarr and try again."
+                    f"Error adding {convo['type']}: no root folders found in {'Sonarr' if convo['type'] == 'series' else 'Radarr'}! Please check your configuration in {'Sonarr' if convo['type'] == 'series' else 'Radarr'} and try again."
                 )
                 query.message.delete()
         elif op.startswith("addto:"):
             r = convo["results"][i]
             path = op.split(":")[1]
             try:
-                added = self.sonarr.add_series(
-                    series_info=r,
-                    path=path,
-                    quality=settings.sonarr_quality_profile_id,
-                    monitored=settings.sonarr_add_monitored,
-                    search=settings.sonarr_search_on_add,
-                )
+                if convo["type"] == "series":
+                    added = self.sonarr.add_series(
+                        series_info=r,
+                        path=path,
+                        quality=settings.sonarr_quality_profile_id,
+                        monitored=settings.sonarr_add_monitored,
+                        search=settings.sonarr_search_on_add,
+                    )
+                elif convo["type"] == "movie":
+                    added = self.radarr.add_movie(
+                        movie_info=r,
+                        path=path,
+                        quality=settings.radarr_quality_profile_id,
+                        monitored=settings.radarr_add_monitored,
+                        search=settings.radarr_search_on_add,
+                    )
+                else:
+                    added = False
             except Exception as e:
-                logger.error(f"Error adding series: {e}")
+                logger.error(f"Error adding {convo['type']}: {e}")
                 added = False
-            logger.debug(f"Result of attempt to add series: {added}")
+            logger.debug(f"Result of attempt to add {convo['type']}: {added}")
             if added:
                 self._delete_conversation(cid)
                 query.message.reply_text(f"Successfully added {r['title']}!")

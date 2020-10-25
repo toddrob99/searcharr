@@ -32,7 +32,10 @@ class Radarr(object):
                 "overview": x.get("overview", "No overview available."),
                 "status": x.get("status", "Unknown Status"),
                 "inCinemas": x.get("inCinemas"),
-                "remotePoster": x.get("remotePoster", "https://artworks.thetvdb.com/banners/images/missing/movie.jpg"),
+                "remotePoster": x.get(
+                    "remotePoster",
+                    "https://artworks.thetvdb.com/banners/images/missing/movie.jpg",
+                ),
                 "year": x.get("year"),
                 "tmdbId": x.get("tmdbId"),
                 "imdbId": x.get("imdbId", None),
@@ -102,6 +105,15 @@ class Radarr(object):
             r.raise_for_status()
         else:
             return r.json()
+
+    def lookup_quality_profile_id(self, v):
+        # Look up quality profile id from a profile name,
+        # But also allow input of a quality profile id
+        r = self._api_get("profile", {})
+        if not r:
+            return 0
+
+        return next((x["id"] for x in r if v in [x["name"], x["id"]]), 0)
 
     def _api_post(self, endpoint, params={}):
         url = self.api_url.format(endpoint=endpoint)

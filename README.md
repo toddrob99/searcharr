@@ -14,7 +14,7 @@ Rename `settings-sample.py` to `settings.py`, and edit the settings within the f
 You are required to update the following settings, at minimum:
 
 * Searcharr Bot > Password
-* Telegram Bot > Token
+* Telegram Bot > Token (see [Telegram Bot Setup Instructions](https://core.telegram.org/bots#6-botfather))
 * Sonarr > URL, API Key, Quality Profile ID
 * Radarr > URL, API Key, Quality Profile ID
 
