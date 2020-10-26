@@ -6,6 +6,7 @@ By Todd Roberts
 https://github.com/toddrob99/searcharr
 """
 import requests
+import time
 from urllib.parse import quote
 
 from log import set_up_logger
@@ -18,6 +19,8 @@ class Sonarr(object):
         if api_url[-1] == "/":
             api_url = api_url[:-1]
         self.api_url = api_url + "/api/{endpoint}?apikey=" + api_key
+        self._all_series = {}
+        self.get_all_series()
 
     def lookup_series(self, title=None, tvdb_id=None):
         r = self._api_get(
@@ -42,7 +45,7 @@ class Sonarr(object):
                 "seriesType": x.get("seriesType"),
                 "imdbId": x.get("imdbId"),
                 "certification": x.get("certification"),
-                "id": x.get("id"),
+                "id": x.get("id", self._series_internal_id(x.get("tvdbId"))),
                 "titleSlug": x.get("titleSlug"),
                 "cleanTitle": x.get("cleanTitle"),
                 "tvRageId": x.get("tvRageId"),
@@ -51,6 +54,20 @@ class Sonarr(object):
             }
             for x in r
         ]
+
+    def _series_internal_id(self, tvdb_id):
+        return next(
+            (x["id"] for x in self.get_all_series() if x.get("tvdbId", 0) == tvdb_id),
+            None,
+        )
+
+    def get_all_series(self):
+        if int(round(self._all_series.get("ts", 0))) < int(round(time.time())) - 30:
+            self.logger.debug("Refreshing all series cache...")
+            r = self._api_get("series", {})
+            self._all_series.update({"series": r, "ts": time.time()})
+
+        return self._all_series["series"]
 
     def add_series(
         self,
