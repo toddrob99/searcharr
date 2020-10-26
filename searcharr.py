@@ -19,7 +19,7 @@ import radarr
 import sonarr
 import settings
 
-__version__ = "1.2.0"
+__version__ = "1.3.0"
 
 DBPATH = os.path.join(os.path.dirname(os.path.realpath(__file__)), "data")
 DBFILE = "searcharr.db"
@@ -50,7 +50,7 @@ def parse_args():
 class Searcharr(object):
     def __init__(self, token):
         self.token = token
-        logger.debug(f"Searcharr v{__version__} - Logging started!")
+        logger.info(f"Searcharr v{__version__} - Logging started!")
         self.sonarr = (
             sonarr.Sonarr(settings.sonarr_url, settings.sonarr_api_key, args.verbose)
             if settings.sonarr_enabled
@@ -94,16 +94,35 @@ class Searcharr(object):
                     f"Found Radarr quality profile id: [{settings.radarr_quality_profile_id}]"
                 )
         self.conversations = {}
+        try:
+            settings.searcharr_admin_password
+        except AttributeError:
+            settings.searcharr_admin_password = uuid.uuid4().hex
+            logger.warning(
+                f'No admin password detected. Please set one in settings.py (searcharr_admin_password="your admin password"). Using {settings.searcharr_admin_password} as the admin password for this session.'
+            )
+        if settings.searcharr_password == "":
+            logger.warning(
+                'Password is blank. This will allow anyone to add series/movies using your bot. If this is unexpected, set a password in settings.py (searcharr_password="your password").'
+            )
 
     def cmd_start(self, update, context):
         logger.debug(f"Received start cmd from [{update.message.from_user.username}]")
-        if self._authenticated(update.message.from_user.id):
+        password = self._strip_entities(update.message)
+        if password and password == settings.searcharr_admin_password:
+            self._add_user(
+                id=update.message.from_user.id,
+                username=str(update.message.from_user.username),
+                admin=1,
+            )
+            update.message.reply_text(
+                "Admin authentication successful. Use /help for commands."
+            )
+        elif self._authenticated(update.message.from_user.id):
             update.message.reply_text(
                 "You are already authenticated. Try /help for usage info."
             )
-            return
-        password = self._strip_entities(update.message)
-        if password == settings.searcharr_password:
+        elif password == settings.searcharr_password:
             self._add_user(
                 id=update.message.from_user.id,
                 username=str(update.message.from_user.username),
@@ -194,15 +213,55 @@ class Searcharr(object):
                 reply_markup=reply_markup,
             )
 
+    def cmd_users(self, update, context):
+        logger.debug(f"Received users cmd from [{update.message.from_user.username}]")
+        auth_level = self._authenticated(update.message.from_user.id)
+        if not auth_level:
+            update.message.reply_text(
+                "I don't seem to know you... Please authenticate with `/start <password>` and then try again."
+            )
+            return
+        elif auth_level != 2:
+            update.message.reply_text(
+                "You do not have admin permissions... Please authenticate with `/start <admin password>` and then try again."
+            )
+            return
+
+        results = self._get_users()
+        cid = uuid.uuid4().hex
+        # self.conversations.update({cid: {"cid": cid, "type": "users", "results": results}})
+        self._create_conversation(
+            id=cid,
+            username=str(update.message.from_user.username),
+            kind="users",
+            results=results,
+        )
+        if not len(results):
+            update.message.reply_text(
+                "Sorry, but I didn't find any users. That seems wrong..."
+            )
+        else:
+            reply_message, reply_markup = self._prepare_response_users(
+                cid, results, 0, 5, len(results),
+            )
+            context.bot.sendMessage(
+                chat_id=update.message.chat.id,
+                text=reply_message,
+                reply_markup=reply_markup,
+            )
+
     def callback(self, update, context):
         query = update.callback_query
         logger.debug(
             f"Received callback from [{query.from_user.username}]: [{query.data}]"
         )
-        if not self._authenticated(query.from_user.id):
+        auth_level = self._authenticated(query.from_user.id)
+        if not auth_level:
             query.message.reply_text(
                 "I don't seem to know you... Please authenticate with `/start <password>` and then try again."
             )
+            query.message.delete()
+            query.answer()
             return
 
         if not query.data or not len(query.data):
@@ -228,39 +287,72 @@ class Searcharr(object):
             # self.conversations.pop(cid)
             query.message.reply_text("Search canceled!")
             query.message.delete()
+        elif op == "done":
+            self._delete_conversation(cid)
+            # self.conversations.pop(cid)
+            query.message.delete()
         elif op == "prev":
-            if i <= 0:
-                return
-            r = convo["results"][i - 1]
-            reply_message, reply_markup = self._prepare_response(
-                convo["type"], r, cid, i - 1, len(convo["results"])
-            )
-            query.message.edit_media(
-                media=InputMediaPhoto(r["remotePoster"]), reply_markup=reply_markup,
-            )
-            query.bot.edit_message_caption(
-                chat_id=query.message.chat_id,
-                message_id=query.message.message_id,
-                caption=reply_message,
-                reply_markup=reply_markup,
-            )
+            if convo["type"] in ["series", "movie"]:
+                if i <= 0:
+                    query.answer()
+                    return
+                r = convo["results"][i - 1]
+                reply_message, reply_markup = self._prepare_response(
+                    convo["type"], r, cid, i - 1, len(convo["results"])
+                )
+                query.message.edit_media(
+                    media=InputMediaPhoto(r["remotePoster"]), reply_markup=reply_markup,
+                )
+                query.bot.edit_message_caption(
+                    chat_id=query.message.chat_id,
+                    message_id=query.message.message_id,
+                    caption=reply_message,
+                    reply_markup=reply_markup,
+                )
+            elif convo["type"] == "users":
+                if i <= 0:
+                    i = 0
+                reply_message, reply_markup = self._prepare_response_users(
+                    cid, convo["results"], i, 5, len(convo["results"]),
+                )
+                context.bot.edit_message_text(
+                    chat_id=query.message.chat.id,
+                    message_id=query.message.message_id,
+                    text=reply_message,
+                    reply_markup=reply_markup,
+                )
         elif op == "next":
-            if i >= len(convo["results"]):
-                return
-            r = convo["results"][i + 1]
-            logger.debug(f"{r=}")
-            reply_message, reply_markup = self._prepare_response(
-                convo["type"], r, cid, i + 1, len(convo["results"])
-            )
-            query.message.edit_media(
-                media=InputMediaPhoto(r["remotePoster"]), reply_markup=reply_markup,
-            )
-            query.bot.edit_message_caption(
-                chat_id=query.message.chat_id,
-                message_id=query.message.message_id,
-                caption=reply_message,
-                reply_markup=reply_markup,
-            )
+            if convo["type"] in ["series", "movie"]:
+                if i >= len(convo["results"]):
+                    query.answer()
+                    return
+                r = convo["results"][i + 1]
+                logger.debug(f"{r=}")
+                reply_message, reply_markup = self._prepare_response(
+                    convo["type"], r, cid, i + 1, len(convo["results"])
+                )
+                query.message.edit_media(
+                    media=InputMediaPhoto(r["remotePoster"]), reply_markup=reply_markup,
+                )
+                query.bot.edit_message_caption(
+                    chat_id=query.message.chat_id,
+                    message_id=query.message.message_id,
+                    caption=reply_message,
+                    reply_markup=reply_markup,
+                )
+            elif convo["type"] == "users":
+                if i > len(convo["results"]):
+                    query.answer()
+                    return
+                reply_message, reply_markup = self._prepare_response_users(
+                    cid, convo["results"], i, 5, len(convo["results"]),
+                )
+                context.bot.edit_message_text(
+                    chat_id=query.message.chat.id,
+                    message_id=query.message.message_id,
+                    text=reply_message,
+                    reply_markup=reply_markup,
+                )
         elif op == "add":
             paths = (
                 self.sonarr.get_root_folders()
@@ -360,6 +452,111 @@ class Searcharr(object):
                 query.message.reply_text(
                     f"Unspecified error encountered while adding {convo['type']}!"
                 )
+        elif op == "remove_user":
+            if auth_level != 2:
+                query.message.reply_text(
+                    "You do not have admin permissions... Please authenticate with `/start <admin password>` and then try again."
+                )
+                query.message.delete()
+                query.answer()
+                return
+            try:
+                self._remove_user(i)
+                # query.message.reply_text(
+                #    f"Successfully removed all access for user id [{i}]!"
+                # )
+                # self._delete_conversation(cid)
+                # query.message.delete()
+                convo.update({"results": self._get_users()})
+                self._create_conversation(
+                    id=cid,
+                    username=str(query.message.from_user.username),
+                    kind="users",
+                    results=convo["results"],
+                )
+                reply_message, reply_markup = self._prepare_response_users(
+                    cid, convo["results"], 0, 5, len(convo["results"]),
+                )
+                context.bot.edit_message_text(
+                    chat_id=query.message.chat.id,
+                    message_id=query.message.message_id,
+                    text=f"Successfully removed all access for user id [{i}]! "
+                    + reply_message,
+                    reply_markup=reply_markup,
+                )
+            except Exception as e:
+                logger.error(f"Error removing all access for user id [{i}]: {e}")
+                query.message.reply_text(
+                    f"Unspecified error encountered while removing user id [{i}]!"
+                )
+        elif op == "make_admin":
+            if auth_level != 2:
+                query.message.reply_text(
+                    "You do not have admin permissions... Please authenticate with `/start <admin password>` and then try again."
+                )
+                query.message.delete()
+                query.answer()
+                return
+            try:
+                self._update_admin_access(i, 1)
+                # query.message.reply_text(f"Added admin access for user id [{i}]!")
+                # self._delete_conversation(cid)
+                # query.message.delete()
+                convo.update({"results": self._get_users()})
+                self._create_conversation(
+                    id=cid,
+                    username=str(query.message.from_user.username),
+                    kind="users",
+                    results=convo["results"],
+                )
+                reply_message, reply_markup = self._prepare_response_users(
+                    cid, convo["results"], 0, 5, len(convo["results"]),
+                )
+                context.bot.edit_message_text(
+                    chat_id=query.message.chat.id,
+                    message_id=query.message.message_id,
+                    text=f"Added admin access for user id [{i}]! " + reply_message,
+                    reply_markup=reply_markup,
+                )
+            except Exception as e:
+                logger.error(f"Error adding admin access for user id [{i}]: {e}")
+                query.message.reply_text(
+                    f"Unspecified error encountered while adding admin access for user id [{i}]!"
+                )
+        elif op == "remove_admin":
+            if auth_level != 2:
+                query.message.reply_text(
+                    "You do not have admin permissions... Please authenticate with `/start <admin password>` and then try again."
+                )
+                query.message.delete()
+                query.answer()
+                return
+            try:
+                self._update_admin_access(i, "")
+                # query.message.reply_text(f"Removed admin access for user id [{i}]!")
+                # self._delete_conversation(cid)
+                # query.message.delete()
+                convo.update({"results": self._get_users()})
+                self._create_conversation(
+                    id=cid,
+                    username=str(query.message.from_user.username),
+                    kind="users",
+                    results=convo["results"],
+                )
+                reply_message, reply_markup = self._prepare_response_users(
+                    cid, convo["results"], 0, 5, len(convo["results"]),
+                )
+                context.bot.edit_message_text(
+                    chat_id=query.message.chat.id,
+                    message_id=query.message.message_id,
+                    text=f"Removed admin access for user id [{i}]! " + reply_message,
+                    reply_markup=reply_markup,
+                )
+            except Exception as e:
+                logger.error(f"Error removing admin access for user id [{i}]: {e}")
+                query.message.reply_text(
+                    f"Unspecified error encountered while removing admin access for user id [{i}]!"
+                )
 
         query.answer()
 
@@ -446,6 +643,46 @@ class Searcharr(object):
 
         return (reply_message, reply_markup)
 
+    def _prepare_response_users(self, cid, users, offset, num, total_results):
+        keyboard = []
+        for u in users[offset : offset + num]:
+            keyboard.append(
+                [
+                    InlineKeyboardButton(
+                        "Remove", callback_data=f"{cid}^^^{u['id']}^^^remove_user"
+                    ),
+                    InlineKeyboardButton(
+                        f"{u['username'] if u['username'] != 'None' else u['id']}",
+                        callback_data=f"{cid}^^^{u['id']}^^^noop",
+                    ),
+                    InlineKeyboardButton(
+                        "Remove Admin" if u["admin"] else "Make Admin",
+                        callback_data=f"{cid}^^^{u['id']}^^^{'remove_admin' if u['admin'] else 'make_admin'}",
+                    ),
+                ]
+            )
+        keyboardNavRow = []
+        if offset > 0:
+            keyboardNavRow.append(
+                InlineKeyboardButton(
+                    "< Prev", callback_data=f"{cid}^^^{offset - num}^^^prev"
+                ),
+            )
+        keyboardNavRow.append(
+            InlineKeyboardButton("Done", callback_data=f"{cid}^^^{offset}^^^done"),
+        )
+        if total_results > 1 and offset + num < total_results:
+            keyboardNavRow.append(
+                InlineKeyboardButton(
+                    "Next >", callback_data=f"{cid}^^^{offset + num}^^^next"
+                ),
+            )
+        keyboard.append(keyboardNavRow)
+        reply_markup = InlineKeyboardMarkup(keyboard)
+
+        reply_message = f"Listing Searcharr users {offset + 1}-{min(offset + num, total_results)} of {total_results}."
+        return (reply_message, reply_markup)
+
     def handle_error(self, update, context):
         logger.error(f"Caught error: {context.error}")
         try:
@@ -491,6 +728,7 @@ class Searcharr(object):
         updater.dispatcher.add_handler(CommandHandler("start", self.cmd_start))
         updater.dispatcher.add_handler(CommandHandler("movie", self.cmd_movie))
         updater.dispatcher.add_handler(CommandHandler("series", self.cmd_series))
+        updater.dispatcher.add_handler(CommandHandler("users", self.cmd_users))
         updater.dispatcher.add_handler(CallbackQueryHandler(self.callback))
         # updater.dispatcher.add_error_handler(self.handle_error)
 
@@ -499,7 +737,7 @@ class Searcharr(object):
 
     def _create_conversation(self, id, username, kind, results):
         con, cur = self._get_con_cur()
-        q = "INSERT INTO conversations (id, username, type, results) VALUES (?, ?, ?, ?)"
+        q = "INSERT OR REPLACE INTO conversations (id, username, type, results) VALUES (?, ?, ?, ?)"
         qa = (id, username, kind, json.dumps(results))
         logger.debug(f"Executing query: [{q}] with args: [{qa}]")
         try:
@@ -553,10 +791,63 @@ class Searcharr(object):
             )
             return False
 
-    def _add_user(self, id, username):
+    def _add_user(self, id, username, admin=""):
         con, cur = self._get_con_cur()
-        q = "INSERT OR IGNORE INTO users (id, username) VALUES (?, ?)"
-        qa = (id, username)
+        q = "INSERT OR REPLACE INTO users (id, username, admin) VALUES (?, ?, ?);"
+        qa = (id, username, admin)
+        logger.debug(f"Executing query: [{q}] with args: [{qa}]")
+        try:
+            with DBLOCK:
+                cur.execute(q, qa)
+                con.commit()
+                con.close()
+                return True
+        except sqlite3.Error as e:
+            logger.error(f"Error executing database query [{q}]: {e}")
+            raise
+
+    def _remove_user(self, id):
+        con, cur = self._get_con_cur()
+        q = "DELETE FROM users where id=?;"
+        qa = (id,)
+        logger.debug(f"Executing query: [{q}] with args: [{qa}]")
+        try:
+            with DBLOCK:
+                cur.execute(q, qa)
+                con.commit()
+                con.close()
+                return True
+        except sqlite3.Error as e:
+            logger.error(f"Error executing database query [{q}]: {e}")
+            raise
+
+    def _get_users(self, admin=False):
+        adminQ = " where IFNULL(admin, '') != ''" if admin else ""
+        q = f"SELECT * FROM users{adminQ};"
+        logger.debug(f"Executing query: [{q}] with no args...")
+        try:
+            con, cur = self._get_con_cur()
+            r = cur.execute(q)
+        except sqlite3.Error as e:
+            r = None
+            logger.error(
+                f"Error executing database query to look up users from the database [{q}]: {e}"
+            )
+
+        if r:
+            records = r.fetchall()
+            con.close()
+            return records
+
+        logger.debug(
+            f"Found no {'admin ' if admin else ''}users in the database (this seems wrong)."
+        )
+        return []
+
+    def _update_admin_access(self, user_id, admin=""):
+        con, cur = self._get_con_cur()
+        q = "UPDATE users set admin=? where id=?;"
+        qa = (str(admin), user_id)
         logger.debug(f"Executing query: [{q}] with args: [{qa}]")
         try:
             with DBLOCK:
@@ -589,9 +880,9 @@ class Searcharr(object):
             logger.debug(f"Query result for conversation lookup: {record}")
             con.close()
             if record and record["id"] == user_id:
-                return True
+                return 2 if record["admin"] else 1
 
-        logger.debug(f"Did not find user [{id}] in the database.")
+        logger.debug(f"Did not find user [{user_id}] in the database.")
         return False
 
     def _dict_factory(self, cursor, row):

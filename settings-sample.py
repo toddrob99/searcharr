@@ -6,7 +6,8 @@ https://github.com/toddrob99/searcharr
 """
 
 # Searcharr Bot
-searcharr_password = ""
+searcharr_password = ""  # Used to authenticate as a regular user to add series/movies
+searcharr_admin_password = ""  # Used to authenticate as admin to manage users
 
 # Telegram
 tgram_token = ""

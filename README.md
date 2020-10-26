@@ -36,13 +36,19 @@ If running from source, use Python 3.8.3+, install requirements using `python -m
 
 ### Authenticate
 
-Send a private message to your bot saying `/start <password>`.
+Send a private message to your bot saying `/start <password>` where `<password>` is the value of `searcharr_password` in `settings.py`. For admin access, instead say `/start <admin_password>` where `<admin_password>` is the value of `searcharr_admin_password` in `settings.py`. An authenticated user can add admin access by re-authenticating using the admin password. Re-authenticating with the non-admin password will not remove a user's admin access. Admin access must be removed by an admin using the `/users` command, or manually in the database.
 
-**Caution**: This command will work in a group chat, but then everyone else in the group will see the password. If not all group members should be allowed to use the bot, then be sure to authenticate in a private message.
+**Caution**: Authentication via `/start` command will work in a group chat, but then everyone else in the group will see the password. If not all group members should be allowed to use the bot, then be sure to authenticate in a private message.
+
+**Double Caution**: Do not authenticate as an admin in a group chat. Always use a private message with your bot.
 
 ### Search & Add a Series to Sonarr or a Movie to Radarr
 
 Send the bot a (private or group) message saying `/series <title>` or `/movie <title>`. The bot will reply with information about the first result, along with buttons to move forward and back within the search results, pop out to tvdb, TMDB, or IMDb, add the current series/movie to Sonarr/Radarr, or cancel the search. When you click the button to add the series/movie to Sonarr/Radarr, the bot will ask what root folder to put the series/movie in--unless you only have one root folder configured in Sonarr/Radarr, in which case it will add it straight away.
+
+### Manage Users
+
+If you are authenticated as an admin, you can use the `/users` command to retrieve a list of users with buttons to remove all access and add/remove admin access (as applicable).
 
 ## Screenshots
 
