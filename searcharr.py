@@ -19,7 +19,7 @@ import radarr
 import sonarr
 import settings
 
-__version__ = "1.3.0"
+__version__ = "1.3.1"
 
 DBPATH = os.path.join(os.path.dirname(os.path.realpath(__file__)), "data")
 DBFILE = "searcharr.db"
@@ -692,23 +692,25 @@ class Searcharr(object):
 
     def cmd_help(self, update, context):
         logger.debug(f"Received help cmd from [{update.message.from_user.username}]")
-        if not self._authenticated(update.message.from_user.id):
+        auth_level = self._authenticated(update.message.from_user.id)
+        if not auth_level:
             update.message.reply_text(
                 "Please authenticate with `/start <password>` and then try again."
             )
             return
         if settings.sonarr_enabled and settings.radarr_enabled:
-            update.message.reply_text(
-                "Use /movie <title> to add a movie to Radarr, and /series <title> to add a series to Sonarr."
-            )
+            resp = "Use /movie <title> to add a movie to Radarr, and /series <title> to add a series to Sonarr."
         elif settings.sonarr_enabled:
-            update.message.reply_text("Use /series <title> to add a series to Sonarr.")
+            resp = "Use /series <title> to add a series to Sonarr."
         elif settings.radarr_enabled:
-            update.message.reply_text("Use /movie <title> to add a movie to Radarr.")
+            resp = "Use /movie <title> to add a movie to Radarr."
         else:
-            update.message.reply_text(
-                "Sorry, but all of my features are currently disabled."
-            )
+            resp = "Sorry, but all of my features are currently disabled."
+
+        if auth_level == 2:
+            resp += " Since you are an admin, you can also use /users to manage users."
+
+        update.message.reply_text(resp)
 
     def _strip_entities(self, message):
         text = message.text
