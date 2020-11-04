@@ -19,7 +19,7 @@ import radarr
 import sonarr
 import settings
 
-__version__ = "1.3.2"
+__version__ = "1.3.3"
 
 DBPATH = os.path.join(os.path.dirname(os.path.realpath(__file__)), "data")
 DBFILE = "searcharr.db"
@@ -150,7 +150,7 @@ class Searcharr(object):
             )
             return
         results = self.radarr.lookup_movie(title)
-        cid = uuid.uuid4().hex
+        cid = self._generate_cid()
         # self.conversations.update({cid: {"cid": cid, "type": "movie", "results": results}})
         self._create_conversation(
             id=cid,
@@ -190,7 +190,7 @@ class Searcharr(object):
             )
             return
         results = self.sonarr.lookup_series(title)
-        cid = uuid.uuid4().hex
+        cid = self._generate_cid()
         # self.conversations.update({cid: {"cid": cid, "type": "series", "results": results}})
         self._create_conversation(
             id=cid,
@@ -228,7 +228,7 @@ class Searcharr(object):
             return
 
         results = self._get_users()
-        cid = uuid.uuid4().hex
+        cid = self._generate_cid()
         # self.conversations.update({cid: {"cid": cid, "type": "users", "results": results}})
         self._create_conversation(
             id=cid,
@@ -420,7 +420,25 @@ class Searcharr(object):
                 query.message.delete()
         elif op.startswith("addto:"):
             r = convo["results"][i]
-            path = op.split(":")[1]
+            paths = (
+                self.sonarr.get_root_folders()
+                if convo["type"] == "series"
+                else self.radarr.get_root_folders()
+                if convo["type"] == "movie"
+                else []
+            )
+            pathId = op.split(":")[1]
+            try:
+                int(pathId)  # Check if pathId is an int - was full path in v1.3.2
+            except ValueError:
+                path = pathId
+                logger.debug(
+                    f"Detected non-integer path id: [{path}], using that as the full path..."
+                )
+            else:
+                path = next((p["path"] for p in paths if p["id"] == int(pathId)), None)
+                logger.debug(f"Path id [{pathId}] lookup result: [{path}]")
+
             try:
                 if convo["type"] == "series":
                     added = self.sonarr.add_series(
@@ -601,7 +619,7 @@ class Searcharr(object):
                     [
                         InlineKeyboardButton(
                             f"Add to {p['path']}",
-                            callback_data=f"{cid}^^^{i}^^^addto:{p['path']}",
+                            callback_data=f"{cid}^^^{i}^^^addto:{p['id']}",
                         )
                     ],
                 )
@@ -732,7 +750,7 @@ class Searcharr(object):
         updater.dispatcher.add_handler(CommandHandler("series", self.cmd_series))
         updater.dispatcher.add_handler(CommandHandler("users", self.cmd_users))
         updater.dispatcher.add_handler(CallbackQueryHandler(self.callback))
-        # updater.dispatcher.add_error_handler(self.handle_error)
+        updater.dispatcher.add_error_handler(self.handle_error)
 
         updater.start_polling()
         updater.idle()
@@ -751,6 +769,27 @@ class Searcharr(object):
         except sqlite3.Error as e:
             logger.error(f"Error executing database query [{q}]: {e}")
             raise
+
+    def _generate_cid(self):
+        q = "SELECT * FROM conversations WHERE id=?"
+        con, cur = self._get_con_cur()
+        while True:
+            u = uuid.uuid4().hex[:8]
+            try:
+                r = cur.execute(q, (u,))
+            except sqlite3.Error as e:
+                r = None
+                logger.error(
+                    f"Error executing database query to check conversation id uniqueness [{q}]: {e}"
+                )
+
+            if not r:
+                return None
+            elif not len(r.fetchall()):
+                con.close()
+                return u
+            else:
+                logger.warning("Detected conversation id collision. Interesting.")
 
     def _get_conversation(self, id):
         q = "SELECT * FROM conversations WHERE id=?;"
@@ -873,13 +912,13 @@ class Searcharr(object):
         except sqlite3.Error as e:
             r = None
             logger.error(
-                f"Error executing database query to look up conversation from the database [{q}]: {e}"
+                f"Error executing database query to look up user from the database [{q}]: {e}"
             )
             return False
 
         if r:
             record = r.fetchone()
-            logger.debug(f"Query result for conversation lookup: {record}")
+            logger.debug(f"Query result for user lookup: {record}")
             con.close()
             if record and record["id"] == user_id:
                 return 2 if record["admin"] else 1

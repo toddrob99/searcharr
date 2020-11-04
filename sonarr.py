@@ -132,7 +132,7 @@ class Sonarr(object):
         if not r:
             return 0
 
-        return next((x["id"] for x in r if v in [x["name"], x["id"]]), 0)
+        return next((x["id"] for x in r if str(v) in [x["name"], str(x["id"])]), 0)
 
     def _api_get(self, endpoint, params={}):
         url = self.api_url.format(endpoint=endpoint)
