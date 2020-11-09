@@ -18,6 +18,10 @@ class Sonarr(object):
         self.logger.debug("Logging started!")
         if api_url[-1] == "/":
             api_url = api_url[:-1]
+        if api_url[:4] != "http":
+            self.logger.error(
+                "Invalid Sonarr URL detected. Please update your settings to include http:// or https:// on the beginning of the URL."
+            )
         self.api_url = api_url + "/api/{endpoint}?apikey=" + api_key
         self._all_series = {}
         self.get_all_series()

@@ -17,6 +17,10 @@ class Radarr(object):
         self.logger.debug("Logging started!")
         if api_url[-1] == "/":
             api_url = api_url[:-1]
+        if api_url[:4] != "http":
+            self.logger.error(
+                "Invalid Radarr URL detected. Please update your settings to include http:// or https:// on the beginning of the URL."
+            )
         self.api_url = api_url + "/api/{endpoint}?apikey=" + api_key
 
     def lookup_movie(self, title=None, tmdb_id=None):
