@@ -12,6 +12,7 @@ from threading import Lock
 import uuid
 
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup, InputMediaPhoto
+from telegram.error import BadRequest
 from telegram.ext import Updater, CommandHandler, CallbackQueryHandler
 
 from log import set_up_logger
@@ -19,7 +20,7 @@ import radarr
 import sonarr
 import settings
 
-__version__ = "1.3.4"
+__version__ = "1.3.5"
 
 DBPATH = os.path.join(os.path.dirname(os.path.realpath(__file__)), "data")
 DBFILE = "searcharr.db"
@@ -44,11 +45,19 @@ def parse_args():
         dest="console_logging",
         help="Enable console logging.",
     )
+    parser.add_argument(
+        "--dev",
+        "-d",
+        action="store_true",
+        dest="dev_mode",
+        help="Enable developer mode, which will result in more exceptions being raised instead of handled.",
+    )
     return parser.parse_args()
 
 
 class Searcharr(object):
     def __init__(self, token):
+        self.DEV_MODE = True if args.dev_mode else False
         self.token = token
         logger.info(f"Searcharr v{__version__} - Logging started!")
         self.sonarr = (
@@ -166,12 +175,26 @@ class Searcharr(object):
             reply_message, reply_markup = self._prepare_response(
                 "movie", r, cid, 0, len(results)
             )
-            context.bot.sendPhoto(
-                chat_id=update.message.chat.id,
-                photo=r["remotePoster"],
-                caption=reply_message,
-                reply_markup=reply_markup,
-            )
+            try:
+                context.bot.sendPhoto(
+                    chat_id=update.message.chat.id,
+                    photo=r["remotePoster"],
+                    caption=reply_message,
+                    reply_markup=reply_markup,
+                )
+            except BadRequest as e:
+                if str(e) == "Wrong type of the web page content":
+                    logger.error(
+                        f"Error sending photo [{r['remotePoster']}]: BadRequest: {e}. Attempting to send with default poster..."
+                    )
+                    context.bot.sendPhoto(
+                        chat_id=update.message.chat.id,
+                        photo="https://artworks.thetvdb.com/banners/images/missing/movie.jpg",
+                        caption=reply_message,
+                        reply_markup=reply_markup,
+                    )
+                else:
+                    raise
 
     def cmd_series(self, update, context):
         logger.debug(f"Received series cmd from [{update.message.from_user.username}]")
@@ -206,12 +229,26 @@ class Searcharr(object):
             reply_message, reply_markup = self._prepare_response(
                 "series", r, cid, 0, len(results)
             )
-            context.bot.sendPhoto(
-                chat_id=update.message.chat.id,
-                photo=r["remotePoster"],
-                caption=reply_message,
-                reply_markup=reply_markup,
-            )
+            try:
+                context.bot.sendPhoto(
+                    chat_id=update.message.chat.id,
+                    photo=r["remotePoster"],
+                    caption=reply_message,
+                    reply_markup=reply_markup,
+                )
+            except BadRequest as e:
+                if str(e) == "Wrong type of the web page content":
+                    logger.error(
+                        f"Error sending photo [{r['remotePoster']}]: BadRequest: {e}. Attempting to send with default poster..."
+                    )
+                    context.bot.sendPhoto(
+                        chat_id=update.message.chat.id,
+                        photo="https://artworks.thetvdb.com/banners/images/missing/movie.jpg",
+                        caption=reply_message,
+                        reply_markup=reply_markup,
+                    )
+                else:
+                    raise
 
     def cmd_users(self, update, context):
         logger.debug(f"Received users cmd from [{update.message.from_user.username}]")
@@ -300,9 +337,24 @@ class Searcharr(object):
                 reply_message, reply_markup = self._prepare_response(
                     convo["type"], r, cid, i - 1, len(convo["results"])
                 )
-                query.message.edit_media(
-                    media=InputMediaPhoto(r["remotePoster"]), reply_markup=reply_markup,
-                )
+                try:
+                    query.message.edit_media(
+                        media=InputMediaPhoto(r["remotePoster"]),
+                        reply_markup=reply_markup,
+                    )
+                except BadRequest as e:
+                    if str(e) == "Wrong type of the web page content":
+                        logger.error(
+                            f"Error sending photo [{r['remotePoster']}]: BadRequest: {e}. Attempting to send with default poster..."
+                        )
+                        query.message.edit_media(
+                            media=InputMediaPhoto(
+                                "https://artworks.thetvdb.com/banners/images/missing/movie.jpg"
+                            ),
+                            reply_markup=reply_markup,
+                        )
+                    else:
+                        raise
                 query.bot.edit_message_caption(
                     chat_id=query.message.chat_id,
                     message_id=query.message.message_id,
@@ -331,9 +383,24 @@ class Searcharr(object):
                 reply_message, reply_markup = self._prepare_response(
                     convo["type"], r, cid, i + 1, len(convo["results"])
                 )
-                query.message.edit_media(
-                    media=InputMediaPhoto(r["remotePoster"]), reply_markup=reply_markup,
-                )
+                try:
+                    query.message.edit_media(
+                        media=InputMediaPhoto(r["remotePoster"]),
+                        reply_markup=reply_markup,
+                    )
+                except BadRequest as e:
+                    if str(e) == "Wrong type of the web page content":
+                        logger.error(
+                            f"Error sending photo [{r['remotePoster']}]: BadRequest: {e}. Attempting to send with default poster..."
+                        )
+                        query.message.edit_media(
+                            media=InputMediaPhoto(
+                                "https://artworks.thetvdb.com/banners/images/missing/movie.jpg"
+                            ),
+                            reply_markup=reply_markup,
+                        )
+                    else:
+                        raise
                 query.bot.edit_message_caption(
                     chat_id=query.message.chat_id,
                     message_id=query.message.message_id,
@@ -372,9 +439,24 @@ class Searcharr(object):
                     add=True,
                     paths=paths,
                 )
-                query.message.edit_media(
-                    media=InputMediaPhoto(r["remotePoster"]), reply_markup=reply_markup,
-                )
+                try:
+                    query.message.edit_media(
+                        media=InputMediaPhoto(r["remotePoster"]),
+                        reply_markup=reply_markup,
+                    )
+                except BadRequest as e:
+                    if str(e) == "Wrong type of the web page content":
+                        logger.error(
+                            f"Error sending photo [{r['remotePoster']}]: BadRequest: {e}. Attempting to send with default poster..."
+                        )
+                        query.message.edit_media(
+                            media=InputMediaPhoto(
+                                "https://artworks.thetvdb.com/banners/images/missing/movie.jpg"
+                            ),
+                            reply_markup=reply_markup,
+                        )
+                    else:
+                        raise
                 query.bot.edit_message_caption(
                     chat_id=query.message.chat_id,
                     message_id=query.message.message_id,
@@ -750,7 +832,12 @@ class Searcharr(object):
         updater.dispatcher.add_handler(CommandHandler("series", self.cmd_series))
         updater.dispatcher.add_handler(CommandHandler("users", self.cmd_users))
         updater.dispatcher.add_handler(CallbackQueryHandler(self.callback))
-        updater.dispatcher.add_error_handler(self.handle_error)
+        if not self.DEV_MODE:
+            updater.dispatcher.add_error_handler(self.handle_error)
+        else:
+            logger.info(
+                "Developer mode is enabled; skipping registration of error handler--exceptions will be raised."
+            )
 
         updater.start_polling()
         updater.idle()
