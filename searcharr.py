@@ -20,7 +20,7 @@ import radarr
 import sonarr
 import settings
 
-__version__ = "1.3.5"
+__version__ = "1.4"
 
 DBPATH = os.path.join(os.path.dirname(os.path.realpath(__file__)), "data")
 DBFILE = "searcharr.db"
@@ -113,6 +113,20 @@ class Searcharr(object):
         if settings.searcharr_password == "":
             logger.warning(
                 'Password is blank. This will allow anyone to add series/movies using your bot. If this is unexpected, set a password in settings.py (searcharr_password="your password").'
+            )
+        try:  # Handle missing sonarr_tag_with_username setting - added v1.4
+            settings.sonarr_tag_with_username
+        except AttributeError:
+            settings.sonarr_tag_with_username = True
+            logger.warning(
+                "No sonarr_tag_with_username setting found. Please add sonarr_tag_with_username to settings.py (sonarr_tag_with_username=True or sonarr_tag_with_username=False). Defaulting to True."
+            )
+        try:  # Handle missing radarr_tag_with_username setting - added v1.4
+            settings.radarr_tag_with_username
+        except AttributeError:
+            settings.radarr_tag_with_username = True
+            logger.warning(
+                "No radarr_tag_with_username setting found. Please add radarr_tag_with_username to settings.py (radarr_tag_with_username=True or radarr_tag_with_username=False). Defaulting to True."
             )
 
     def cmd_start(self, update, context):
@@ -472,6 +486,9 @@ class Searcharr(object):
                             quality=settings.sonarr_quality_profile_id,
                             monitored=settings.sonarr_add_monitored,
                             search=settings.sonarr_search_on_add,
+                            tag=f"searcharr-{query.from_user.username if query.from_user.username else query.from_user.id}"
+                            if settings.sonarr_tag_with_username
+                            else None,
                         )
                     elif convo["type"] == "movie":
                         added = self.radarr.add_movie(
@@ -480,6 +497,9 @@ class Searcharr(object):
                             quality=settings.radarr_quality_profile_id,
                             monitored=settings.radarr_add_monitored,
                             search=settings.radarr_search_on_add,
+                            tag=f"searcharr-{query.from_user.username if query.from_user.username else query.from_user.id}"
+                            if settings.radarr_tag_with_username
+                            else None,
                         )
                     else:
                         added = False
@@ -529,6 +549,9 @@ class Searcharr(object):
                         quality=settings.sonarr_quality_profile_id,
                         monitored=settings.sonarr_add_monitored,
                         search=settings.sonarr_search_on_add,
+                        tag=f"searcharr-{query.from_user.username if query.from_user.username else query.from_user.id}"
+                        if settings.sonarr_tag_with_username
+                        else None,
                     )
                 elif convo["type"] == "movie":
                     added = self.radarr.add_movie(
@@ -537,6 +560,9 @@ class Searcharr(object):
                         quality=settings.radarr_quality_profile_id,
                         monitored=settings.radarr_add_monitored,
                         search=settings.radarr_search_on_add,
+                        tag=f"searcharr-{query.from_user.username if query.from_user.username else query.from_user.id}"
+                        if settings.radarr_tag_with_username
+                        else None,
                     )
                 else:
                     added = False

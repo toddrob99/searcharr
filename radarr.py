@@ -59,6 +59,7 @@ class Radarr(object):
         quality=None,
         search=True,
         monitored=True,
+        tag=None,
     ):
         if not movie_info and not tmdb_id:
             return False
@@ -81,6 +82,8 @@ class Radarr(object):
             "monitored": monitored,
             "addOptions": {"searchForMovie": search},
         }
+        if tag:
+            params.update({"tags": [self.get_tag_id(tag)]})
 
         return self._api_post("movie", params)
 
@@ -109,6 +112,41 @@ class Radarr(object):
             r.raise_for_status()
         else:
             return r.json()
+
+    def get_all_tags(self):
+        r = self._api_get("tag", {})
+        self.logger.debug(f"Result of API call to get all tags: {r}")
+        return [] if not r else r
+
+    def add_tag(self, tag):
+        params = {
+            "label": tag,
+        }
+        t = self._api_post("tag", params)
+        self.logger.debug(f"Result of API call to add tag: {t}")
+        return t
+
+    def get_tag_id(self, tag):
+        if i := next(
+            iter(
+                [
+                    x.get("id")
+                    for x in self.get_all_tags()
+                    if x.get("label").lower() == tag.lower()
+                ]
+            ),
+            None,
+        ):
+            self.logger.debug(f"Found tag id [{i}] for tag [{tag}]")
+            return i
+        else:
+            t = self.add_tag(tag)
+            self.logger.debug(
+                f"Created tag id for tag [{tag}]: {t['id']}"
+                if t.get("id")
+                else f"Could not add tag [{tag}]"
+            )
+            return t.get("id", None)
 
     def lookup_quality_profile_id(self, v):
         # Look up quality profile id from a profile name,
