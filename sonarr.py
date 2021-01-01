@@ -113,7 +113,12 @@ class Sonarr(object):
             },
         }
         if tag:
-            params.update({"tags": [self.get_tag_id(tag)]})
+            if tag_id := self.get_tag_id(tag):
+                params.update({"tags": [tag_id]})
+            else:
+                self.logger.warning(
+                    "Tag lookup/creation failed. The series will not be tagged."
+                )
 
         return self._api_post("series", params)
 
@@ -159,12 +164,19 @@ class Sonarr(object):
             self.logger.debug(f"Found tag id [{i}] for tag [{tag}]")
             return i
         else:
+            self.logger.debug(f"No tag id found for [{tag}]; adding...")
             t = self.add_tag(tag)
-            self.logger.debug(
-                f"Created tag id for tag [{tag}]: {t['id']}"
-                if t.get("id")
-                else f"Could not add tag [{tag}]"
-            )
+            if not isinstance(t, dict):
+                self.logger.error(
+                    f"Wrong data type returned from Sonarr API when attempting to add tag [{tag}]. Expected dict, got {type(t)}."
+                )
+                t = None
+            else:
+                self.logger.debug(
+                    f"Created tag id for tag [{tag}]: {t['id']}"
+                    if t.get("id")
+                    else f"Could not add tag [{tag}]"
+                )
             return t.get("id", None)
 
     def lookup_quality_profile_id(self, v):
