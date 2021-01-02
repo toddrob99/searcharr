@@ -170,7 +170,7 @@ class Sonarr(object):
                 self.logger.error(
                     f"Wrong data type returned from Sonarr API when attempting to add tag [{tag}]. Expected dict, got {type(t)}."
                 )
-                t = None
+                return None
             else:
                 self.logger.debug(
                     f"Created tag id for tag [{tag}]: {t['id']}"
