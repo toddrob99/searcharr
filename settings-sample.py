@@ -29,4 +29,3 @@ radarr_quality_profile_id = "HD-720p"  # can be name or id value
 radarr_add_monitored = True
 radarr_search_on_add = True
 radarr_tag_with_username = True
-radarr_api_version = 1  # v3 api not yet available -- use 1 even for aphrodite

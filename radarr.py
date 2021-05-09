@@ -21,7 +21,33 @@ class Radarr(object):
             self.logger.error(
                 "Invalid Radarr URL detected. Please update your settings to include http:// or https:// on the beginning of the URL."
             )
-        self.api_url = api_url + "/api/{endpoint}?apikey=" + api_key
+        self.radarr_version = self.discover_version(api_url, api_key)
+        if not self.radarr_version.startswith("0."):
+            self.api_url = api_url + "/api/v3/{endpoint}?apikey=" + api_key
+
+    def discover_version(self, api_url, api_key):
+        try:
+            self.api_url = api_url + "/api/v3/{endpoint}?apikey=" + api_key
+            radarrInfo = self._api_get("system/status")
+            self.logger.debug(
+                f"Discovered Radarr version {radarrInfo.get('version')}. Using v3 api."
+            )
+            return radarrInfo.get("version")
+        except requests.exceptions.HTTPError as e:
+            self.logger.debug(f"Radarr v3 API threw exception: {e}")
+
+        try:
+            self.api_url = api_url + "/api/{endpoint}?apikey=" + api_key
+            radarrInfo = self._api_get("system/status")
+            self.logger.warning(
+                f"Discovered Radarr version {radarrInfo.get('version')}. Using legacy API. Consider upgrading to the latest version of Radarr for the best experience."
+            )
+            return radarrInfo.get("version")
+        except requests.exceptions.HTTPError as e:
+            self.logger.debug(f"Radarr legacy API threw exception: {e}")
+
+        self.logger.debug("Failed to discover Radarr version")
+        return None
 
     def lookup_movie(self, title=None, tmdb_id=None):
         r = self._api_get(
@@ -86,7 +112,9 @@ class Radarr(object):
             if tag_id := self.get_tag_id(tag):
                 params.update({"tags": [tag_id]})
             else:
-                self.logger.warning("Tag lookup/creation failed. The movie will not be tagged.")
+                self.logger.warning(
+                    "Tag lookup/creation failed. The movie will not be tagged."
+                )
 
         return self._api_post("movie", params)
 
@@ -161,7 +189,11 @@ class Radarr(object):
     def lookup_quality_profile_id(self, v):
         # Look up quality profile id from a profile name,
         # But also allow input of a quality profile id
-        r = self._api_get("profile", {})
+        r = (
+            self._api_get("profile", {})
+            if self.radarr_version.startswith("0.")
+            else self._api_get("qualityProfile", {})
+        )
         if not r:
             return 0
 
