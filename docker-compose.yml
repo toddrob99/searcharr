@@ -2,7 +2,7 @@ version: '3.0'
 services:
   searcharr:
     container_name: searcharr
-    image: toddrob/searcharr:latest
+    image: ocgineer/searcharr:latest
     volumes:
       - ./data:/app/data
       - ./logs:/app/logs

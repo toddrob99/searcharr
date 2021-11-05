@@ -83,7 +83,8 @@ class Sonarr(object):
         season_folders=True,
         monitored=True,
         unmonitor_existing=True,
-        tag=None,
+        tags=None,
+        seriestype="standard",
     ):
         if not series_info and not tvdb_id:
             return False
@@ -106,19 +107,31 @@ class Sonarr(object):
             "tvRageId": series_info["tvRageId"],
             "seasonFolder": season_folders,
             "monitored": monitored,
+            "seriesType": seriestype,
             "addOptions": {
                 "ignoreEpisodesWithFiles": unmonitor_existing,
                 "ignoreEpisodesWithoutFiles": "false",
                 "searchForMissingEpisodes": search,
             },
         }
-        if tag:
-            if tag_id := self.get_tag_id(tag):
-                params.update({"tags": [tag_id]})
+        if tags:
+            if isinstance(tags, list):
+                tagids = []
+                for tag in tags:
+                    if tag_id := self.get_tag_id(tag):
+                        tagids.append(tag_id)
+                    else:
+                        self.logger.warning(
+                            f"Tag {tag} lookup/creation failed. The series will not be tagged with {tag}."
+                        )
+                params.update({"tags": tagids})
             else:
-                self.logger.warning(
-                    "Tag lookup/creation failed. The series will not be tagged."
-                )
+                if tag_id := self.get_tag_id(tags):
+                    params.update({"tags": [tag_id]})
+                else:
+                    self.logger.warning(
+                        "Tag lookup/creation failed. The series will not be tagged."
+                    )
 
         return self._api_post("series", params)
 

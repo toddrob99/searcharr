@@ -1,6 +1,6 @@
 FROM python:3.9-alpine
 
-LABEL Name=Searcharr Version=1.1
+LABEL Name=Searcharr Version=1.2
 
 WORKDIR /app
 ADD . /app

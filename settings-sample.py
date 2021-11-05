@@ -16,10 +16,13 @@ tgram_token = ""
 sonarr_enabled = True
 sonarr_url = ""  # http://192.168.0.100:8989
 sonarr_api_key = ""
-sonarr_quality_profile_id = "HD 720p"  # can be name or id value
+sonarr_quality_profile_id = "HD-720p"       # can be name or id value
 sonarr_add_monitored = True
 sonarr_search_on_add = True
 sonarr_tag_with_username = True
+sonarr_anime_enabled = True                 # enables the /anime command, sets the series type to anime
+sonarr_anime_tag_with_anime = True          # will tag the added anime with 'anime'
+sonarr_anime_tag_with_current = False       # will tag the added anime with 'anime-current-airing'
 
 # Radarr
 radarr_enabled = True

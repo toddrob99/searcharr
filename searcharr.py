@@ -264,6 +264,60 @@ class Searcharr(object):
                 else:
                     raise
 
+    def cmd_anime(self, update, context):
+        logger.debug(f"Received anime cmd from [{update.message.from_user.username}]")
+        if not self._authenticated(update.message.from_user.id):
+            update.message.reply_text(
+                "I don't seem to know you... Please authenticate with `/start <password>` and then try again."
+            )
+            return
+        if not settings.sonarr_enabled and not settings.sonarr_anime_enabled:
+            update.message.reply_text("Sorry, but anime support is disabled.")
+            return
+        title = self._strip_entities(update.message)
+        if not len(title):
+            update.message.reply_text(
+                "Please include the anime title in the command, e.g. `/anime Title Here`"
+            )
+            return
+        results = self.sonarr.lookup_series(title)
+        cid = self._generate_cid()
+        # self.conversations.update({cid: {"cid": cid, "type": "series", "results": results}})
+        self._create_conversation(
+            id=cid,
+            username=str(update.message.from_user.username),
+            kind="anime",
+            results=results,
+        )
+
+        if not len(results):
+            update.message.reply_text("Sorry, but I didn't find any matching anime.")
+        else:
+            r = results[0]
+            reply_message, reply_markup = self._prepare_response(
+                "anime", r, cid, 0, len(results)
+            )
+            try:
+                context.bot.sendPhoto(
+                    chat_id=update.message.chat.id,
+                    photo=r["remotePoster"],
+                    caption=reply_message,
+                    reply_markup=reply_markup,
+                )
+            except BadRequest as e:
+                if str(e) == "Wrong type of the web page content":
+                    logger.error(
+                        f"Error sending photo [{r['remotePoster']}]: BadRequest: {e}. Attempting to send with default poster..."
+                    )
+                    context.bot.sendPhoto(
+                        chat_id=update.message.chat.id,
+                        photo="https://artworks.thetvdb.com/banners/images/missing/movie.jpg",
+                        caption=reply_message,
+                        reply_markup=reply_markup,
+                    )
+                else:
+                    raise
+
     def cmd_users(self, update, context):
         logger.debug(f"Received users cmd from [{update.message.from_user.username}]")
         auth_level = self._authenticated(update.message.from_user.id)
@@ -343,7 +397,7 @@ class Searcharr(object):
             # self.conversations.pop(cid)
             query.message.delete()
         elif op == "prev":
-            if convo["type"] in ["series", "movie"]:
+            if convo["type"] in ["series", "anime", "movie"]:
                 if i <= 0:
                     query.answer()
                     return
@@ -388,7 +442,7 @@ class Searcharr(object):
                     reply_markup=reply_markup,
                 )
         elif op == "next":
-            if convo["type"] in ["series", "movie"]:
+            if convo["type"] in ["series", "anime", "movie"]:
                 if i >= len(convo["results"]):
                     query.answer()
                     return
@@ -437,7 +491,7 @@ class Searcharr(object):
         elif op == "add":
             paths = (
                 self.sonarr.get_root_folders()
-                if convo["type"] == "series"
+                if convo["type"] == "series" or convo["type"] == "anime"
                 else self.radarr.get_root_folders()
                 if convo["type"] == "movie"
                 else []
@@ -486,9 +540,28 @@ class Searcharr(object):
                             quality=settings.sonarr_quality_profile_id,
                             monitored=settings.sonarr_add_monitored,
                             search=settings.sonarr_search_on_add,
-                            tag=f"searcharr-{query.from_user.username if query.from_user.username else query.from_user.id}"
+                            tags=f"searcharr-{query.from_user.username if query.from_user.username else query.from_user.id}"
                             if settings.sonarr_tag_with_username
                             else None,
+                            seriestype="standard",
+                        )
+                    elif convo["type"] == "anime":
+                        tagslist = []
+                        if settings.sonarr_tag_with_username:
+                            tagslist.append(f"searcharr-{query.from_user.username if query.from_user.username else query.from_user.id}")
+                        if settings.sonarr_anime_tag_with_anime:
+                            tagslist.append("anime")
+                        if settings.sonarr_anime_tag_with_current:
+                            tagslist.append("anime-current-airing")
+                        
+                        added = self.sonarr.add_series(
+                            series_info=r,
+                            path=paths[0]["path"],
+                            quality=settings.sonarr_quality_profile_id,
+                            monitored=settings.sonarr_add_monitored,
+                            search=settings.sonarr_search_on_add,
+                            tags=tagslist,
+                            seriestype="anime",
                         )
                     elif convo["type"] == "movie":
                         added = self.radarr.add_movie(
@@ -497,7 +570,7 @@ class Searcharr(object):
                             quality=settings.radarr_quality_profile_id,
                             monitored=settings.radarr_add_monitored,
                             search=settings.radarr_search_on_add,
-                            tag=f"searcharr-{query.from_user.username if query.from_user.username else query.from_user.id}"
+                            tags=f"searcharr-{query.from_user.username if query.from_user.username else query.from_user.id}"
                             if settings.radarr_tag_with_username
                             else None,
                         )
@@ -524,7 +597,7 @@ class Searcharr(object):
             r = convo["results"][i]
             paths = (
                 self.sonarr.get_root_folders()
-                if convo["type"] == "series"
+                if convo["type"] == "series" or convo["type"] == "anime"
                 else self.radarr.get_root_folders()
                 if convo["type"] == "movie"
                 else []
@@ -549,9 +622,28 @@ class Searcharr(object):
                         quality=settings.sonarr_quality_profile_id,
                         monitored=settings.sonarr_add_monitored,
                         search=settings.sonarr_search_on_add,
-                        tag=f"searcharr-{query.from_user.username if query.from_user.username else query.from_user.id}"
+                        tags=f"searcharr-{query.from_user.username if query.from_user.username else query.from_user.id}"
                         if settings.sonarr_tag_with_username
                         else None,
+                        seriestype="standard",
+                    )
+                elif convo["type"] == "anime":
+                    tagslist = []
+                    if settings.sonarr_tag_with_username:
+                        tagslist.append(f"searcharr-{query.from_user.username if query.from_user.username else query.from_user.id}")
+                    if settings.sonarr_anime_tag_with_anime:
+                        tagslist.append("anime")
+                    if settings.sonarr_anime_tag_with_current:
+                        tagslist.append("anime-current-airing")
+                    
+                    added = self.sonarr.add_series(
+                        series_info=r,
+                        path=path,
+                        quality=settings.sonarr_quality_profile_id,
+                        monitored=settings.sonarr_add_monitored,
+                        search=settings.sonarr_search_on_add,
+                        tags=tagslist,
+                        seriestype="anime",
                     )
                 elif convo["type"] == "movie":
                     added = self.radarr.add_movie(
@@ -560,7 +652,7 @@ class Searcharr(object):
                         quality=settings.radarr_quality_profile_id,
                         monitored=settings.radarr_add_monitored,
                         search=settings.radarr_search_on_add,
-                        tag=f"searcharr-{query.from_user.username if query.from_user.username else query.from_user.id}"
+                        tags=f"searcharr-{query.from_user.username if query.from_user.username else query.from_user.id}"
                         if settings.radarr_tag_with_username
                         else None,
                     )
@@ -693,7 +785,7 @@ class Searcharr(object):
             keyboardNavRow.append(
                 InlineKeyboardButton("< Prev", callback_data=f"{cid}^^^{i}^^^prev")
             )
-        if kind == "series" and r["tvdbId"]:
+        if (kind == "series" or kind == "anime") and r["tvdbId"]:
             keyboardNavRow.append(
                 InlineKeyboardButton(
                     "tvdb", url=f"https://thetvdb.com/series/{r['titleSlug']}"
@@ -718,7 +810,7 @@ class Searcharr(object):
         keyboard.append(keyboardNavRow)
 
         if add:
-            if not paths and kind == "series":
+            if not paths and (kind == "series" or kind == "anime"):
                 paths = self.sonarr.get_root_folders()
             elif not paths and kind == "movie":
                 paths = self.radarr.get_root_folders()
@@ -756,7 +848,7 @@ class Searcharr(object):
 
         reply_markup = InlineKeyboardMarkup(keyboard)
 
-        if kind == "series":
+        if kind == "series" or kind == "anime":
             reply_message = f"{r['title']}{' (' + str(r['year']) + ')' if r['year'] and str(r['year']) not in r['title'] else ''} - {r['seasonCount']} Season{'s' if r['seasonCount'] != 1 else ''}{' - ' + r['network'] if r['network'] else ''} - {r['status'].title()}\n\n{r['overview']}"[
                 0:1024
             ]
@@ -824,8 +916,12 @@ class Searcharr(object):
                 "Please authenticate with `/start <password>` and then try again."
             )
             return
-        if settings.sonarr_enabled and settings.radarr_enabled:
+        if settings.sonarr_enabled and settings.sonarr_anime_enabled and settings.radarr_enabled:
+            resp = "Use /movie <title> to add a movie to Radarr, use /series <title> to add a series to Sonarr, and use /anime <title> to add an anime to Sonarr."
+        elif settings.sonarr_enabled and settings.radarr_enabled:
             resp = "Use /movie <title> to add a movie to Radarr, and /series <title> to add a series to Sonarr."
+        elif settings.sonarr_enabled and settings.sonarr_anime_enabled:
+            resp = "Use /series <title> to add a series to Sonarr, and use /anime <title> to add an anime to Sonarr."
         elif settings.sonarr_enabled:
             resp = "Use /series <title> to add a series to Sonarr."
         elif settings.radarr_enabled:
@@ -856,6 +952,7 @@ class Searcharr(object):
         updater.dispatcher.add_handler(CommandHandler("start", self.cmd_start))
         updater.dispatcher.add_handler(CommandHandler("movie", self.cmd_movie))
         updater.dispatcher.add_handler(CommandHandler("series", self.cmd_series))
+        updater.dispatcher.add_handler(CommandHandler("anime", self.cmd_anime))
         updater.dispatcher.add_handler(CommandHandler("users", self.cmd_users))
         updater.dispatcher.add_handler(CallbackQueryHandler(self.callback))
         if not self.DEV_MODE:

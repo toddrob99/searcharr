@@ -85,7 +85,7 @@ class Radarr(object):
         quality=None,
         search=True,
         monitored=True,
-        tag=None,
+        tags=None,
     ):
         if not movie_info and not tmdb_id:
             return False
@@ -108,13 +108,24 @@ class Radarr(object):
             "monitored": monitored,
             "addOptions": {"searchForMovie": search},
         }
-        if tag:
-            if tag_id := self.get_tag_id(tag):
-                params.update({"tags": [tag_id]})
+        if tags:
+            if isinstance(tags, list):
+                tagids = []
+                for tag in tags:
+                    if tag_id := self.get_tag_id(tag):
+                        tagids.append(tag_id)
+                    else:
+                        self.logger.warning(
+                            f"Tag {tag} lookup/creation failed. The movie will not be tagged with {tag}."
+                        )
+                params.update({"tags": tagids})
             else:
-                self.logger.warning(
-                    "Tag lookup/creation failed. The movie will not be tagged."
-                )
+                if tag_id := self.get_tag_id(tags):
+                    params.update({"tags": [tag_id]})
+                else:
+                    self.logger.warning(
+                        "Tag lookup/creation failed. The movie will not be tagged."
+                    )
 
         return self._api_post("movie", params)
 
