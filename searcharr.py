@@ -128,6 +128,20 @@ class Searcharr(object):
             logger.warning(
                 "No radarr_tag_with_username setting found. Please add radarr_tag_with_username to settings.py (radarr_tag_with_username=True or radarr_tag_with_username=False). Defaulting to True."
             )
+        try: # Handle missing sonarr_anime_enabled settings - added in 1.6
+            settings.sonarr_anime_enabled
+        except AttributeError:
+            settings.sonarr_anime_enabled = True
+            logger.warning(
+                "No sonarr_anime_enabled setting found. Please add sonarr_anime_enabled to settings.py (sonarr_anime_enabled=True or sonarr_anime_enabled=False). Defaulting to True."
+            )
+        try: # Handle missing sonarr_anime_tag_with_anime settings - added in 1.6
+            settings.sonarr_anime_tag_with_anime
+        except AttributeError:
+            settings.sonarr_anime_tag_with_anime = True
+            logger.warning(
+                "No sonarr_anime_tag_with_anime setting found. Please add sonarr_anime_tag_with_anime to settings.py (sonarr_anime_tag_with_anime=True or sonarr_anime_tag_with_anime=False). Defaulting to True."
+            )
 
     def cmd_start(self, update, context):
         logger.debug(f"Received start cmd from [{update.message.from_user.username}]")
