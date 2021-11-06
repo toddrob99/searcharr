@@ -551,8 +551,6 @@ class Searcharr(object):
                             tagslist.append(f"searcharr-{query.from_user.username if query.from_user.username else query.from_user.id}")
                         if settings.sonarr_anime_tag_with_anime:
                             tagslist.append("anime")
-                        if settings.sonarr_anime_tag_with_current:
-                            tagslist.append("anime-current-airing")
                         
                         added = self.sonarr.add_series(
                             series_info=r,
@@ -633,8 +631,6 @@ class Searcharr(object):
                         tagslist.append(f"searcharr-{query.from_user.username if query.from_user.username else query.from_user.id}")
                     if settings.sonarr_anime_tag_with_anime:
                         tagslist.append("anime")
-                    if settings.sonarr_anime_tag_with_current:
-                        tagslist.append("anime-current-airing")
                     
                     added = self.sonarr.add_series(
                         series_info=r,

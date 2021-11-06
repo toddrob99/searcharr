@@ -22,7 +22,6 @@ sonarr_search_on_add = True
 sonarr_tag_with_username = True
 sonarr_anime_enabled = True                 # enables the /anime command, sets the series type to anime
 sonarr_anime_tag_with_anime = True          # will tag the added anime with 'anime'
-sonarr_anime_tag_with_current = False       # will tag the added anime with 'anime-current-airing'
 
 # Radarr
 radarr_enabled = True
