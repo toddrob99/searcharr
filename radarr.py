@@ -143,6 +143,7 @@ class Radarr(object):
         r = requests.get(url)
         if r.status_code not in [200, 201, 202, 204]:
             r.raise_for_status()
+            return None
         else:
             return r.json()
 
@@ -207,5 +208,6 @@ class Radarr(object):
         r = requests.post(url, json=params)
         if r.status_code not in [200, 201, 202, 204]:
             r.raise_for_status()
+            return None
         else:
             return r.json()
