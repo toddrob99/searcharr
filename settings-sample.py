@@ -20,6 +20,7 @@ sonarr_quality_profile_id = "HD - 720p/1080p"  # can be name or id value
 sonarr_add_monitored = True
 sonarr_search_on_add = True
 sonarr_tag_with_username = True
+sonarr_series_command_aliases = ["series"]  # e.g. ["series", "tv", "t"]
 
 # Radarr
 radarr_enabled = True
@@ -30,3 +31,4 @@ radarr_add_monitored = True
 radarr_search_on_add = True
 radarr_tag_with_username = True
 radarr_min_availability = "released"  # options: "announced", "inCinemas", "released"
+radarr_movie_command_aliases = ["movie"]  # e.g. ["movie", "mv", "m"]

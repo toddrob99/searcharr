@@ -44,7 +44,7 @@ Send a private message to your bot saying `/start <password>` where `<password>`
 
 ### Search & Add a Series to Sonarr or a Movie to Radarr
 
-Send the bot a (private or group) message saying `/series <title>` or `/movie <title>`. The bot will reply with information about the first result, along with buttons to move forward and back within the search results, pop out to tvdb, TMDB, or IMDb, add the current series/movie to Sonarr/Radarr, or cancel the search. When you click the button to add the series/movie to Sonarr/Radarr, the bot will ask what root folder to put the series/movie in--unless you only have one root folder configured in Sonarr/Radarr, in which case it will add it straight away.
+Send the bot a (private or group) message saying `/series <title>` or `/movie <title>` (replace with custom command aliases, as configured in `settings.py`). The bot will reply with information about the first result, along with buttons to move forward and back within the search results, pop out to tvdb, TMDB, or IMDb, add the current series/movie to Sonarr/Radarr, or cancel the search. When you click the button to add the series/movie to Sonarr/Radarr, the bot will ask what root folder to put the series/movie in--unless you only have one root folder configured in Sonarr/Radarr, in which case it will add it straight away.
 
 ### Manage Users
 

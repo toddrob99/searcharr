@@ -127,6 +127,16 @@ class Searcharr(object):
             logger.warning(
                 'No radarr_min_availability setting found. Please add radarr_min_availability to settings.py (options: "released", "announced", "inCinema"). Defaulting to "released".'
             )
+        if not hasattr(settings, "sonarr_series_command_aliases"):
+            settings.sonarr_series_command_aliases = ["series"]
+            logger.warning(
+                'No sonarr_series_command_aliases setting found. Please add sonarr_series_command_aliases to settings.py (e.g. sonarr_series_command_aliases=["series", "tv"]. Defaulting to ["series"].'
+            )
+        if not hasattr(settings, "radarr_movie_command_aliases"):
+            settings.radarr_movie_command_aliases = ["movie"]
+            logger.warning(
+                'No radarr_movie_command_aliases setting found. Please add radarr_movie_command_aliases to settings.py (e.g. radarr_movie_command_aliases=["movie", "mv"]. Defaulting to ["movie"].'
+            )
 
     def cmd_start(self, update, context):
         logger.debug(f"Received start cmd from [{update.message.from_user.username}]")
@@ -168,7 +178,7 @@ class Searcharr(object):
         title = self._strip_entities(update.message)
         if not len(title):
             update.message.reply_text(
-                "Please include the movie title in the command, e.g. `/movie Title Here`"
+                f'Please include the movie title in the command, e.g. {" OR ".join([f"`/{c} Title Here`" for c in settings.radarr_movie_command_aliases])}'
             )
             return
         results = self.radarr.lookup_movie(title)
@@ -222,7 +232,7 @@ class Searcharr(object):
         title = self._strip_entities(update.message)
         if not len(title):
             update.message.reply_text(
-                "Please include the series title in the command, e.g. `/series Title Here`"
+                f'Please include the series title in the command, e.g. {" OR ".join([f"`/{c} Title Here`" for c in settings.sonarr_series_command_aliases])}'
             )
             return
         results = self.sonarr.lookup_series(title)
@@ -850,11 +860,11 @@ class Searcharr(object):
             )
             return
         if settings.sonarr_enabled and settings.radarr_enabled:
-            resp = "Use /movie <title> to add a movie to Radarr, and /series <title> to add a series to Sonarr."
+            resp = f'Use {" OR ".join([f"/{c} <title>" for c in settings.radarr_movie_command_aliases])} to add a movie to Radarr, and {" OR ".join([f"/{c} <title>" for c in settings.sonarr_series_command_aliases])} to add a series to Sonarr.'
         elif settings.sonarr_enabled:
-            resp = "Use /series <title> to add a series to Sonarr."
+            resp = f'Use {" OR ".join([f"/{c} <title>" for c in settings.sonarr_series_command_aliases])} to add a series to Sonarr.'
         elif settings.radarr_enabled:
-            resp = "Use /movie <title> to add a movie to Radarr."
+            resp = f'Use {" OR ".join([f"/{c} <title>" for c in settings.radarr_movie_command_aliases])} to add a movie to Radarr.'
         else:
             resp = "Sorry, but all of my features are currently disabled."
 
@@ -879,8 +889,12 @@ class Searcharr(object):
 
         updater.dispatcher.add_handler(CommandHandler("help", self.cmd_help))
         updater.dispatcher.add_handler(CommandHandler("start", self.cmd_start))
-        updater.dispatcher.add_handler(CommandHandler("movie", self.cmd_movie))
-        updater.dispatcher.add_handler(CommandHandler("series", self.cmd_series))
+        for c in settings.radarr_movie_command_aliases:
+            logger.debug(f"Registering [/{c}] as a movie command")
+            updater.dispatcher.add_handler(CommandHandler(c, self.cmd_movie))
+        for c in settings.sonarr_series_command_aliases:
+            logger.debug(f"Registering [/{c}] as a series command")
+            updater.dispatcher.add_handler(CommandHandler(c, self.cmd_series))
         updater.dispatcher.add_handler(CommandHandler("users", self.cmd_users))
         updater.dispatcher.add_handler(CallbackQueryHandler(self.callback))
         if not self.DEV_MODE:
