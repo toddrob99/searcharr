@@ -20,7 +20,7 @@ import radarr
 import sonarr
 import settings
 
-__version__ = "1.5"
+__version__ = "2.0-b1"
 
 DBPATH = os.path.join(os.path.dirname(os.path.realpath(__file__)), "data")
 DBFILE = "searcharr.db"
@@ -103,9 +103,7 @@ class Searcharr(object):
                     f"Found Radarr quality profile id: [{settings.radarr_quality_profile_id}]"
                 )
         self.conversations = {}
-        try:
-            settings.searcharr_admin_password
-        except AttributeError:
+        if not hasattr(settings, "searcharr_admin_password"):
             settings.searcharr_admin_password = uuid.uuid4().hex
             logger.warning(
                 f'No admin password detected. Please set one in settings.py (searcharr_admin_password="your admin password"). Using {settings.searcharr_admin_password} as the admin password for this session.'
@@ -114,19 +112,20 @@ class Searcharr(object):
             logger.warning(
                 'Password is blank. This will allow anyone to add series/movies using your bot. If this is unexpected, set a password in settings.py (searcharr_password="your password").'
             )
-        try:  # Handle missing sonarr_tag_with_username setting - added v1.4
-            settings.sonarr_tag_with_username
-        except AttributeError:
+        if not hasattr(settings, "sonarr_tag_with_username"):
             settings.sonarr_tag_with_username = True
             logger.warning(
                 "No sonarr_tag_with_username setting found. Please add sonarr_tag_with_username to settings.py (sonarr_tag_with_username=True or sonarr_tag_with_username=False). Defaulting to True."
             )
-        try:  # Handle missing radarr_tag_with_username setting - added v1.4
-            settings.radarr_tag_with_username
-        except AttributeError:
+        if not hasattr(settings, "radarr_tag_with_username"):
             settings.radarr_tag_with_username = True
             logger.warning(
                 "No radarr_tag_with_username setting found. Please add radarr_tag_with_username to settings.py (radarr_tag_with_username=True or radarr_tag_with_username=False). Defaulting to True."
+            )
+        if not hasattr(settings, "radarr_min_availability"):
+            settings.radarr_min_availability = "released"
+            logger.warning(
+                'No radarr_min_availability setting found. Please add radarr_min_availability to settings.py (options: "released", "announced", "inCinema"). Defaulting to "released".'
             )
 
     def cmd_start(self, update, context):
@@ -293,7 +292,11 @@ class Searcharr(object):
             )
         else:
             reply_message, reply_markup = self._prepare_response_users(
-                cid, results, 0, 5, len(results),
+                cid,
+                results,
+                0,
+                5,
+                len(results),
             )
             context.bot.sendMessage(
                 chat_id=update.message.chat.id,
@@ -379,7 +382,11 @@ class Searcharr(object):
                 if i <= 0:
                     i = 0
                 reply_message, reply_markup = self._prepare_response_users(
-                    cid, convo["results"], i, 5, len(convo["results"]),
+                    cid,
+                    convo["results"],
+                    i,
+                    5,
+                    len(convo["results"]),
                 )
                 context.bot.edit_message_text(
                     chat_id=query.message.chat.id,
@@ -426,7 +433,11 @@ class Searcharr(object):
                     query.answer()
                     return
                 reply_message, reply_markup = self._prepare_response_users(
-                    cid, convo["results"], i, 5, len(convo["results"]),
+                    cid,
+                    convo["results"],
+                    i,
+                    5,
+                    len(convo["results"]),
                 )
                 context.bot.edit_message_text(
                     chat_id=query.message.chat.id,
@@ -500,6 +511,7 @@ class Searcharr(object):
                             tag=f"searcharr-{query.from_user.username if query.from_user.username else query.from_user.id}"
                             if settings.radarr_tag_with_username
                             else None,
+                            min_avail=settings.radarr_min_availability,
                         )
                     else:
                         added = False
@@ -563,6 +575,7 @@ class Searcharr(object):
                         tag=f"searcharr-{query.from_user.username if query.from_user.username else query.from_user.id}"
                         if settings.radarr_tag_with_username
                         else None,
+                        min_avail=settings.radarr_min_availability,
                     )
                 else:
                     added = False
@@ -601,7 +614,11 @@ class Searcharr(object):
                     results=convo["results"],
                 )
                 reply_message, reply_markup = self._prepare_response_users(
-                    cid, convo["results"], 0, 5, len(convo["results"]),
+                    cid,
+                    convo["results"],
+                    0,
+                    5,
+                    len(convo["results"]),
                 )
                 context.bot.edit_message_text(
                     chat_id=query.message.chat.id,
@@ -636,7 +653,11 @@ class Searcharr(object):
                     results=convo["results"],
                 )
                 reply_message, reply_markup = self._prepare_response_users(
-                    cid, convo["results"], 0, 5, len(convo["results"]),
+                    cid,
+                    convo["results"],
+                    0,
+                    5,
+                    len(convo["results"]),
                 )
                 context.bot.edit_message_text(
                     chat_id=query.message.chat.id,
@@ -670,7 +691,11 @@ class Searcharr(object):
                     results=convo["results"],
                 )
                 reply_message, reply_markup = self._prepare_response_users(
-                    cid, convo["results"], 0, 5, len(convo["results"]),
+                    cid,
+                    convo["results"],
+                    0,
+                    5,
+                    len(convo["results"]),
                 )
                 context.bot.edit_message_text(
                     chat_id=query.message.chat.id,

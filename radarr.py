@@ -86,6 +86,7 @@ class Radarr(object):
         search=True,
         monitored=True,
         tag=None,
+        min_avail="released",
     ):
         if not movie_info and not tmdb_id:
             return False
@@ -106,6 +107,7 @@ class Radarr(object):
             "images": movie_info["images"],
             "rootFolderPath": path,
             "monitored": monitored,
+            "minimumAvailability": min_avail,
             "addOptions": {"searchForMovie": search},
         }
         if tag:
