@@ -9,6 +9,7 @@ import json
 import os
 import sqlite3
 from threading import Lock
+from urllib.parse import parse_qsl
 import uuid
 
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup, InputMediaPhoto
@@ -343,6 +344,11 @@ class Searcharr(object):
             return
 
         cid, i, op = query.data.split("^^^")
+        if "^^" in op:
+            op, op_flags = op.split("^^")
+            op_flags = dict(parse_qsl(op_flags))
+            for k, v in op_flags.items():
+                self._update_add_data(cid, k, v)
         i = int(i)
         if op == "noop":
             pass
@@ -574,6 +580,7 @@ class Searcharr(object):
                         tag=f"searcharr-{query.from_user.username if query.from_user.username else query.from_user.id}"
                         if settings.sonarr_tag_with_username
                         else None,
+                        additional_data=self._get_add_data(cid),
                     )
                 elif convo["type"] == "movie":
                     added = self.radarr.add_movie(
@@ -788,6 +795,15 @@ class Searcharr(object):
         )
         if len(keyboardActRow):
             keyboard.append(keyboardActRow)
+        if not add and kind == "series" and "Anime" in r["genres"]:
+            keyboard.append(
+                [
+                    InlineKeyboardButton(
+                        "Add Series as Anime Type!",
+                        callback_data=f"{cid}^^^{i}^^^add^^st=a",
+                    )
+                ]
+            )
 
         reply_markup = InlineKeyboardMarkup(keyboard)
 
@@ -919,7 +935,9 @@ class Searcharr(object):
                 con.close()
                 return True
         except sqlite3.Error as e:
-            logger.error(f"Error executing database query [{q}]: {e}")
+            logger.error(
+                f"Error executing database query to create conversation [{q}]: {e}"
+            )
             raise
 
     def _generate_cid(self):
@@ -968,6 +986,7 @@ class Searcharr(object):
         return None
 
     def _delete_conversation(self, id):
+        self._clear_add_data(id)
         q = "DELETE FROM conversations WHERE id=?;"
         qa = (id,)
         logger.debug(f"Executing query: [{q}] with args: [{qa}]")
@@ -980,7 +999,60 @@ class Searcharr(object):
                 return True
         except sqlite3.Error as e:
             logger.error(
-                f"Error executing database query to look up conversation from the database [{q}]: {e}"
+                f"Error executing database query to delete conversation from the database [{q}]: {e}"
+            )
+            return False
+
+    def _get_add_data(self, cid):
+        q = "SELECT * FROM add_data WHERE cid=?;"
+        qa = (cid,)
+        logger.debug(f"Executing query: [{q}] with args: [{qa}]...")
+        try:
+            con, cur = self._get_con_cur()
+            r = cur.execute(q, qa)
+        except sqlite3.Error as e:
+            r = None
+            logger.error(
+                f"Error executing database query to look up conversation add data from the database [{q}]: {e}"
+            )
+
+        if r:
+            records = r.fetchall()
+            con.close()
+            logger.debug(f"Query response: {records}")
+            return {x["key"]: x["value"] for x in records}
+        else:
+            return {}
+
+    def _update_add_data(self, cid, key, value):
+        con, cur = self._get_con_cur()
+        q = "INSERT OR REPLACE INTO add_data (cid, key, value) VALUES (?, ?, ?)"
+        qa = (cid, key, value)
+        logger.debug(f"Executing query: [{q}] with args: [{qa}]")
+        try:
+            with DBLOCK:
+                cur.execute(q, qa)
+                con.commit()
+                con.close()
+                return True
+        except sqlite3.Error as e:
+            logger.error(f"Error executing database query [{q}]: {e}")
+            raise
+
+    def _clear_add_data(self, cid):
+        q = "DELETE FROM add_data WHERE cid=?;"
+        qa = (cid,)
+        logger.debug(f"Executing query: [{q}] with args: [{qa}]")
+        try:
+            con, cur = self._get_con_cur()
+            with DBLOCK:
+                cur.execute(q, qa)
+                con.commit()
+                con.close()
+                return True
+        except sqlite3.Error as e:
+            logger.error(
+                f"Error executing database query to delete conversation add data from the database [{q}]: {e}"
             )
             return False
 
@@ -1115,33 +1187,34 @@ class Searcharr(object):
 
     def _init_db(self):
         con, cur = self._get_con_cur()
-        q = """CREATE TABLE IF NOT EXISTS conversations (
-            id text primary key,
-            username text not null,
-            type text,
-            results text
-        );"""
-        logger.debug(f"Executing query: [{q}] with no args...")
-        try:
-            with DBLOCK:
-                cur.execute(q)
-        except sqlite3.Error as e:
-            logger.error(f"Error executing database query [{q}]: {e}")
-            raise
-
-        q = """CREATE TABLE IF NOT EXISTS users (
-            id integer primary key,
-            username text not null,
-            admin text,
-            permissions text
-        );"""
-        logger.debug(f"Executing query: [{q}] with no args...")
-        try:
-            with DBLOCK:
-                cur.execute(q)
-        except sqlite3.Error as e:
-            logger.error(f"Error executing database query [{q}]: {e}")
-            raise
+        queries = [
+            """CREATE TABLE IF NOT EXISTS conversations (
+                id text primary key,
+                username text not null,
+                type text,
+                results text
+            );""",
+            """CREATE TABLE IF NOT EXISTS users (
+                id integer primary key,
+                username text not null,
+                admin text,
+                permissions text
+            );""",
+            """CREATE TABLE IF NOT EXISTS add_data (
+                cid text,
+                key text,
+                value text,
+                primary key (cid, key)
+            );""",
+        ]
+        for q in queries:
+            logger.debug(f"Executing query: [{q}] with no args...")
+            try:
+                with DBLOCK:
+                    cur.execute(q)
+            except sqlite3.Error as e:
+                logger.error(f"Error executing database query [{q}]: {e}")
+                raise
 
         con.commit()
         con.close()

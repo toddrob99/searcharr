@@ -55,6 +55,7 @@ class Sonarr(object):
                 "tvRageId": x.get("tvRageId"),
                 "images": x.get("images"),
                 "seasons": x.get("seasons"),
+                "genres": x.get("genres", []),
             }
             for x in r
         ]
@@ -84,6 +85,7 @@ class Sonarr(object):
         monitored=True,
         unmonitor_existing=True,
         tag=None,
+        additional_data={},
     ):
         if not series_info and not tvdb_id:
             return False
@@ -94,6 +96,8 @@ class Sonarr(object):
                 series_info = series_info[0]
             else:
                 return False
+
+        self.logger.debug(f"Additional data: {additional_data}")
 
         params = {
             "tvdbId": series_info["tvdbId"],
@@ -106,6 +110,7 @@ class Sonarr(object):
             "tvRageId": series_info["tvRageId"],
             "seasonFolder": season_folders,
             "monitored": monitored,
+            "seriesType": "anime" if additional_data.get("st") == "a" else "standard",
             "addOptions": {
                 "ignoreEpisodesWithFiles": unmonitor_existing,
                 "ignoreEpisodesWithoutFiles": "false",
