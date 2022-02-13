@@ -23,6 +23,7 @@ class Sonarr(object):
                 "Invalid Sonarr URL detected. Please update your settings to include http:// or https:// on the beginning of the URL."
             )
         self.api_url = api_url + "/api/{endpoint}?apikey=" + api_key
+        self._quality_profiles = self.get_all_quality_profiles()
         self._all_series = {}
         self.get_all_series()
 
@@ -78,8 +79,6 @@ class Sonarr(object):
         self,
         series_info=None,
         tvdb_id=None,
-        path=None,
-        quality=None,
         search=True,
         season_folders=True,
         monitored=True,
@@ -98,6 +97,9 @@ class Sonarr(object):
                 return False
 
         self.logger.debug(f"Additional data: {additional_data}")
+
+        path = additional_data["p"]
+        quality = additional_data["q"]
 
         params = {
             "tvdbId": series_info["tvdbId"],
@@ -184,14 +186,15 @@ class Sonarr(object):
                 )
             return t.get("id", None)
 
-    def lookup_quality_profile_id(self, v):
-        # Look up quality profile id from a profile name,
-        # Or validate existence of a quality profile id
-        r = self._api_get("profile", {})
-        if not r:
-            return 0
+    def lookup_quality_profile(self, v):
+        # Look up quality profile from a profile name or id
+        return next(
+            (x for x in self._quality_profiles if str(v) in [x["name"], str(x["id"])]),
+            None,
+        )
 
-        return next((x["id"] for x in r if str(v) in [x["name"], str(x["id"])]), 0)
+    def get_all_quality_profiles(self):
+        return self._api_get("profile", {}) or None
 
     def _api_get(self, endpoint, params={}):
         url = self.api_url.format(endpoint=endpoint)

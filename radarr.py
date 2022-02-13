@@ -24,6 +24,7 @@ class Radarr(object):
         self.radarr_version = self.discover_version(api_url, api_key)
         if not self.radarr_version.startswith("0."):
             self.api_url = api_url + "/api/v3/{endpoint}?apikey=" + api_key
+        self._quality_profiles = self.get_all_quality_profiles()
 
     def discover_version(self, api_url, api_key):
         try:
@@ -81,12 +82,11 @@ class Radarr(object):
         self,
         movie_info=None,
         tmdb_id=None,
-        path=None,
-        quality=None,
         search=True,
         monitored=True,
         tag=None,
         min_avail="released",
+        additional_data={},
     ):
         if not movie_info and not tmdb_id:
             return False
@@ -97,6 +97,11 @@ class Radarr(object):
                 movie_info = movie_info[0]
             else:
                 return False
+
+        self.logger.debug(f"Additional data: {additional_data}")
+
+        path = additional_data["p"]
+        quality = additional_data["q"]
 
         params = {
             "tmdbId": movie_info["tmdbId"],
@@ -189,18 +194,19 @@ class Radarr(object):
                 )
             return t.get("id", None)
 
-    def lookup_quality_profile_id(self, v):
-        # Look up quality profile id from a profile name,
-        # But also allow input of a quality profile id
-        r = (
+    def lookup_quality_profile(self, v):
+        # Look up quality profile from a profile name or id
+        return next(
+            (x for x in self._quality_profiles if str(v) in [x["name"], str(x["id"])]),
+            0,
+        )
+
+    def get_all_quality_profiles(self):
+        return (
             self._api_get("profile", {})
             if self.radarr_version.startswith("0.")
             else self._api_get("qualityProfile", {})
-        )
-        if not r:
-            return 0
-
-        return next((x["id"] for x in r if str(v) in [x["name"], str(x["id"])]), 0)
+        ) or None
 
     def _api_post(self, endpoint, params={}):
         url = self.api_url.format(endpoint=endpoint)

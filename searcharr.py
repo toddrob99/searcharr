@@ -67,42 +67,64 @@ class Searcharr(object):
             else None
         )
         if self.sonarr:
-            logger.debug(
-                f"Looking up Sonarr quality profile id for [{settings.sonarr_quality_profile_id}]..."
-            )
-            foundId = self.sonarr.lookup_quality_profile_id(
-                settings.sonarr_quality_profile_id
-            )
-            if foundId == 0:
+            quality_profiles = []
+            if not isinstance(settings.sonarr_quality_profile_id, list):
+                settings.sonarr_quality_profile_id = [
+                    settings.sonarr_quality_profile_id
+                ]
+            for i in settings.sonarr_quality_profile_id:
+                logger.debug(
+                    f"Looking up/validating Sonarr quality profile id for [{i}]..."
+                )
+                foundProfile = self.sonarr.lookup_quality_profile(i)
+                if not foundProfile:
+                    logger.error(f"Sonarr quality profile id/name [{i}] is invalid!")
+                else:
+                    logger.debug(
+                        f"Found Sonarr quality profile for [{i}]: [{foundProfile}]"
+                    )
+                    quality_profiles.append(foundProfile)
+            if not len(quality_profiles):
                 logger.error(
-                    f"Sonarr quality profile provided in settings [{settings.sonarr_quality_profile_id}] is invalid!"
+                    f"No valid Sonarr quality profile(s) provided! Using all of the quality profiles I found in Sonarr: {self.sonarr._quality_profiles}"
                 )
             else:
-                settings.sonarr_quality_profile_id = foundId
                 logger.debug(
-                    f"Found Sonarr quality profile id: [{settings.sonarr_quality_profile_id}]"
+                    f"Using the following Sonarr quality profile(s): {[(x['id'], x['name']) for x in quality_profiles]}"
                 )
+                self.sonarr._quality_profiles = quality_profiles
         self.radarr = (
             radarr.Radarr(settings.radarr_url, settings.radarr_api_key, args.verbose)
             if settings.radarr_enabled
             else None
         )
         if self.radarr:
-            logger.debug(
-                f"Looking up Radarr quality profile id for [{settings.radarr_quality_profile_id}]..."
-            )
-            foundId = self.radarr.lookup_quality_profile_id(
-                settings.radarr_quality_profile_id
-            )
-            if foundId == 0:
+            quality_profiles = []
+            if not isinstance(settings.radarr_quality_profile_id, list):
+                settings.radarr_quality_profile_id = [
+                    settings.radarr_quality_profile_id
+                ]
+            for i in settings.radarr_quality_profile_id:
+                logger.debug(
+                    f"Looking up/validating Radarr quality profile id for [{i}]..."
+                )
+                foundProfile = self.radarr.lookup_quality_profile(i)
+                if not foundProfile:
+                    logger.error(f"Radarr quality profile id/name [{i}] is invalid!")
+                else:
+                    logger.debug(
+                        f"Found Radarr quality profile for [{i}]: [{foundProfile}]"
+                    )
+                    quality_profiles.append(foundProfile)
+            if not len(quality_profiles):
                 logger.error(
-                    f"Radarr quality profile provided in settings [{settings.radarr_quality_profile_id}] is invalid!"
+                    f"No valid Radarr quality profile(s) provided! Using all of the quality profiles I found in Radarr: {self.radarr._quality_profiles}"
                 )
             else:
-                settings.radarr_quality_profile_id = foundId
                 logger.debug(
-                    f"Found Radarr quality profile id: [{settings.radarr_quality_profile_id}]"
+                    f"Using the following Radarr quality profile(s): {[(x['id'], x['name']) for x in quality_profiles]}"
                 )
+                self.radarr._quality_profiles = quality_profiles
         self.conversations = {}
         if not hasattr(settings, "searcharr_admin_password"):
             settings.searcharr_admin_password = uuid.uuid4().hex
@@ -348,6 +370,9 @@ class Searcharr(object):
             op, op_flags = op.split("^^")
             op_flags = dict(parse_qsl(op_flags))
             for k, v in op_flags.items():
+                logger.debug(
+                    f"Adding/Updating additional data for cid=[{cid}], key=[{k}], value=[{v}]..."
+                )
                 self._update_add_data(cid, k, v)
         i = int(i)
         if op == "noop":
@@ -569,12 +594,59 @@ class Searcharr(object):
                 path = next((p["path"] for p in paths if p["id"] == int(pathId)), None)
                 logger.debug(f"Path id [{pathId}] lookup result: [{path}]")
 
+            self._update_add_data(cid, "p", path)
+
+            quality_profiles = (
+                self.sonarr._quality_profiles
+                if convo["type"] == "series"
+                else self.radarr._quality_profiles
+            )
+            if len(quality_profiles) > 1:
+                # prepare response to prompt user to select quality profile, and return
+                reply_message, reply_markup = self._prepare_response(
+                    convo["type"],
+                    r,
+                    cid,
+                    i,
+                    len(convo["results"]),
+                    add=True,
+                    quality_profiles=quality_profiles,
+                )
+                try:
+                    query.message.edit_media(
+                        media=InputMediaPhoto(r["remotePoster"]),
+                        reply_markup=reply_markup,
+                    )
+                except BadRequest as e:
+                    if str(e) == "Wrong type of the web page content":
+                        logger.error(
+                            f"Error sending photo [{r['remotePoster']}]: BadRequest: {e}. Attempting to send with default poster..."
+                        )
+                        query.message.edit_media(
+                            media=InputMediaPhoto(
+                                "https://artworks.thetvdb.com/banners/images/missing/movie.jpg"
+                            ),
+                            reply_markup=reply_markup,
+                        )
+                    else:
+                        raise
+                query.bot.edit_message_caption(
+                    chat_id=query.message.chat_id,
+                    message_id=query.message.message_id,
+                    caption=reply_message,
+                    reply_markup=reply_markup,
+                )
+                query.answer()
+                return
+            else:
+                # continue to add, since there's only 1 quality profile enabled
+                quality_profile_id = quality_profiles[0]["id"]
+                self._update_add_data(cid, "q", quality_profile_id)
+
             try:
                 if convo["type"] == "series":
                     added = self.sonarr.add_series(
                         series_info=r,
-                        path=path,
-                        quality=settings.sonarr_quality_profile_id,
                         monitored=settings.sonarr_add_monitored,
                         search=settings.sonarr_search_on_add,
                         tag=f"searcharr-{query.from_user.username if query.from_user.username else query.from_user.id}"
@@ -585,14 +657,51 @@ class Searcharr(object):
                 elif convo["type"] == "movie":
                     added = self.radarr.add_movie(
                         movie_info=r,
-                        path=path,
-                        quality=settings.radarr_quality_profile_id,
                         monitored=settings.radarr_add_monitored,
                         search=settings.radarr_search_on_add,
                         tag=f"searcharr-{query.from_user.username if query.from_user.username else query.from_user.id}"
                         if settings.radarr_tag_with_username
                         else None,
                         min_avail=settings.radarr_min_availability,
+                        additional_data=self._get_add_data(cid),
+                    )
+                else:
+                    added = False
+            except Exception as e:
+                logger.error(f"Error adding {convo['type']}: {e}")
+                added = False
+            logger.debug(f"Result of attempt to add {convo['type']}: {added}")
+            if added:
+                self._delete_conversation(cid)
+                query.message.reply_text(f"Successfully added {r['title']}!")
+                query.message.delete()
+            else:
+                query.message.reply_text(
+                    f"Unspecified error encountered while adding {convo['type']}!"
+                )
+        elif op.startswith("addqp"):
+            r = convo["results"][i]
+            try:
+                if convo["type"] == "series":
+                    added = self.sonarr.add_series(
+                        series_info=r,
+                        monitored=settings.sonarr_add_monitored,
+                        search=settings.sonarr_search_on_add,
+                        tag=f"searcharr-{query.from_user.username if query.from_user.username else query.from_user.id}"
+                        if settings.sonarr_tag_with_username
+                        else None,
+                        additional_data=self._get_add_data(cid),
+                    )
+                elif convo["type"] == "movie":
+                    added = self.radarr.add_movie(
+                        movie_info=r,
+                        monitored=settings.radarr_add_monitored,
+                        search=settings.radarr_search_on_add,
+                        tag=f"searcharr-{query.from_user.username if query.from_user.username else query.from_user.id}"
+                        if settings.radarr_tag_with_username
+                        else None,
+                        min_avail=settings.radarr_min_availability,
+                        additional_data=self._get_add_data(cid),
                     )
                 else:
                     added = False
@@ -728,7 +837,17 @@ class Searcharr(object):
 
         query.answer()
 
-    def _prepare_response(self, kind, r, cid, i, total_results, add=False, paths=None):
+    def _prepare_response(
+        self,
+        kind,
+        r,
+        cid,
+        i,
+        total_results,
+        add=False,
+        paths=None,
+        quality_profiles=None,
+    ):
         keyboard = []
         keyboardNavRow = []
         if i > 0:
@@ -760,19 +879,30 @@ class Searcharr(object):
         keyboard.append(keyboardNavRow)
 
         if add:
-            if not paths and kind == "series":
-                paths = self.sonarr.get_root_folders()
-            elif not paths and kind == "movie":
-                paths = self.radarr.get_root_folders()
-            for p in paths:
-                keyboard.append(
-                    [
-                        InlineKeyboardButton(
-                            f"Add to {p['path']}",
-                            callback_data=f"{cid}^^^{i}^^^addto:{p['id']}",
-                        )
-                    ],
-                )
+            if quality_profiles:
+                for q in quality_profiles:
+                    keyboard.append(
+                        [
+                            InlineKeyboardButton(
+                                f"Add Quality: {q['name']}",
+                                callback_data=f"{cid}^^^{i}^^^addqp^^q={q['id']}",
+                            )
+                        ],
+                    )
+            else:
+                if not paths and kind == "series":
+                    paths = self.sonarr.get_root_folders()
+                elif not paths and kind == "movie":
+                    paths = self.radarr.get_root_folders()
+                for p in paths:
+                    keyboard.append(
+                        [
+                            InlineKeyboardButton(
+                                f"Add to {p['path']}",
+                                callback_data=f"{cid}^^^{i}^^^addto:{p['id']}",
+                            )
+                        ],
+                    )
 
         keyboardActRow = []
         if not add:
