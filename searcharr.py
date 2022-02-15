@@ -213,6 +213,11 @@ class Searcharr(object):
             logger.warning(
                 'No radarr_movie_command_aliases setting found. Please add radarr_movie_command_aliases to settings.py (e.g. radarr_movie_command_aliases=["movie", "mv"]. Defaulting to ["movie"].'
             )
+        if not hasattr(settings, "sonarr_season_monitor_prompt"):
+            settings.sonarr_season_monitor_prompt = False
+            logger.warning(
+                "No sonarr_season_monitor_prompt setting found. Please add sonarr_season_monitor_prompt to settings.py (e.g. sonarr_season_monitor_prompt=True if you want users to choose whether to monitor all/first/latest season(s). Defaulting to False."
+            )
 
     def cmd_start(self, update, context):
         logger.debug(f"Received start cmd from [{update.message.from_user.username}]")
@@ -679,6 +684,54 @@ class Searcharr(object):
                     query.answer()
                     return
 
+            if (
+                convo["type"] == "series"
+                and settings.sonarr_season_monitor_prompt
+                and additional_data.get("m", False) is False
+            ):
+                # m = monitor season(s)
+                monitor_options = [
+                    "All Seasons",
+                    "First Season Only",
+                    "Latest Season Only",
+                ]
+                # prepare response to prompt user to select quality profile, and return
+                reply_message, reply_markup = self._prepare_response(
+                    convo["type"],
+                    r,
+                    cid,
+                    i,
+                    len(convo["results"]),
+                    add=True,
+                    monitor_options=monitor_options,
+                )
+                try:
+                    query.message.edit_media(
+                        media=InputMediaPhoto(r["remotePoster"]),
+                        reply_markup=reply_markup,
+                    )
+                except BadRequest as e:
+                    if str(e) == "Wrong type of the web page content":
+                        logger.error(
+                            f"Error sending photo [{r['remotePoster']}]: BadRequest: {e}. Attempting to send with default poster..."
+                        )
+                        query.message.edit_media(
+                            media=InputMediaPhoto(
+                                "https://artworks.thetvdb.com/banners/images/missing/movie.jpg"
+                            ),
+                            reply_markup=reply_markup,
+                        )
+                    else:
+                        raise
+                query.bot.edit_message_caption(
+                    chat_id=query.message.chat_id,
+                    message_id=query.message.message_id,
+                    caption=reply_message,
+                    reply_markup=reply_markup,
+                )
+                query.answer()
+                return
+
             logger.debug("All data is accounted for, proceeding to add...")
             try:
                 if convo["type"] == "series":
@@ -846,6 +899,7 @@ class Searcharr(object):
         add=False,
         paths=None,
         quality_profiles=None,
+        monitor_options=None,
     ):
         keyboard = []
         keyboardNavRow = []
@@ -878,7 +932,17 @@ class Searcharr(object):
         keyboard.append(keyboardNavRow)
 
         if add:
-            if quality_profiles:
+            if monitor_options:
+                for k, o in enumerate(monitor_options):
+                    keyboard.append(
+                        [
+                            InlineKeyboardButton(
+                                f"Monitor {o}",
+                                callback_data=f"{cid}^^^{i}^^^add^^m={k}",
+                            )
+                        ],
+                    )
+            elif quality_profiles:
                 for q in quality_profiles:
                     keyboard.append(
                         [

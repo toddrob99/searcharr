@@ -101,6 +101,26 @@ class Sonarr(object):
 
         path = additional_data["p"]
         quality = additional_data["q"]
+        monitor_options = int(additional_data.get("m", 0))
+        if monitor_options == 1:
+            # Monitor only the first season
+            for s in series_info["seasons"]:
+                if s["seasonNumber"] != 1:
+                    s.update({"monitored": False})
+        elif monitor_options == 2:
+            if next(
+                (x for x in series_info["seasons"] if x["seasonNumber"] == 0), False
+            ):
+                # There is a Season 0
+                max_season = len(series_info["seasons"]) - 1
+            else:
+                max_season = len(series_info["seasons"])
+            # Monitor only the latest season
+            for s in series_info["seasons"]:
+                if s["seasonNumber"] != max_season:
+                    s.update({"monitored": False})
+
+        self.logger.debug(f"{series_info['seasons']=}")
 
         params = {
             "tvdbId": series_info["tvdbId"],

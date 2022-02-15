@@ -22,6 +22,7 @@ sonarr_search_on_add = True
 sonarr_tag_with_username = True
 sonarr_series_command_aliases = ["series"]  # e.g. ["series", "tv", "t"]
 sonarr_series_paths = []  # e.g. ["/tv", "/anime"] - can be full path or id value - leave empty to enable all
+sonarr_season_monitor_prompt = False  # False - always monitor all seasons; True - prompt user to select from All, First, or Latest season(s)
 
 # Radarr
 radarr_enabled = True
