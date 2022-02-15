@@ -58,7 +58,7 @@ Authenticate by saying `/start <password>` (or `/start@bot_username <password>` 
 
 ![Authenticate](https://github.com/toddrob99/searcharr/blob/main/screenshots/authenticate.png?raw=true)
 
-Search for movie using `/movie <title>` or series using `/series <title>` (behavior is the same). Buttons will appear to open the series/movie info in tvdb, IMDb, or TVDB when those ids are available.
+Search for movie using `/movie <title>` or series using `/series <title>` (behavior is the same for series and movies) (use custom commands configured in `settings.py` if applicable). Buttons will appear to open the series/movie info in tvdb, IMDb, or TVDB when those ids are available.
 
 ![Search Result](https://github.com/toddrob99/searcharr/blob/main/screenshots/add.png?raw=true)
 
