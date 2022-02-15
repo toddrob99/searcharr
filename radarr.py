@@ -25,6 +25,7 @@ class Radarr(object):
         if not self.radarr_version.startswith("0."):
             self.api_url = api_url + "/api/v3/{endpoint}?apikey=" + api_key
         self._quality_profiles = self.get_all_quality_profiles()
+        self._root_folders = self.get_root_folders()
 
     def discover_version(self, api_url, api_key):
         try:
@@ -198,7 +199,7 @@ class Radarr(object):
         # Look up quality profile from a profile name or id
         return next(
             (x for x in self._quality_profiles if str(v) in [x["name"], str(x["id"])]),
-            0,
+            None,
         )
 
     def get_all_quality_profiles(self):
@@ -207,6 +208,13 @@ class Radarr(object):
             if self.radarr_version.startswith("0.")
             else self._api_get("qualityProfile", {})
         ) or None
+
+    def lookup_root_folder(self, v):
+        # Look up root folder from a path or id
+        return next(
+            (x for x in self._root_folders if str(v) in [x["path"], str(x["id"])]),
+            None,
+        )
 
     def _api_post(self, endpoint, params={}):
         url = self.api_url.format(endpoint=endpoint)

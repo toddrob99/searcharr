@@ -93,6 +93,27 @@ class Searcharr(object):
                     f"Using the following Sonarr quality profile(s): {[(x['id'], x['name']) for x in quality_profiles]}"
                 )
                 self.sonarr._quality_profiles = quality_profiles
+
+            root_folders = []
+            if not isinstance(settings.sonarr_series_paths, list):
+                settings.sonarr_series_paths = [settings.sonarr_series_paths]
+            for i in settings.sonarr_series_paths:
+                logger.debug(f"Looking up/validating Sonarr root folder for [{i}]...")
+                foundPath = self.sonarr.lookup_root_folder(i)
+                if not foundPath:
+                    logger.error(f"Sonarr root folder path/id [{i}] is invalid!")
+                else:
+                    logger.debug(f"Found Sonarr root folder for [{i}]: [{foundPath}]")
+                    root_folders.append(foundPath)
+            if not len(root_folders):
+                logger.error(
+                    f"No valid Sonarr root folder(s) provided! Using all of the root folders I found in Sonarr: {self.sonarr._root_folders}"
+                )
+            else:
+                logger.debug(
+                    f"Using the following Sonarr root folder(s): {[(x['id'], x['path']) for x in root_folders]}"
+                )
+                self.sonarr._root_folders = root_folders
         self.radarr = (
             radarr.Radarr(settings.radarr_url, settings.radarr_api_key, args.verbose)
             if settings.radarr_enabled
@@ -125,6 +146,28 @@ class Searcharr(object):
                     f"Using the following Radarr quality profile(s): {[(x['id'], x['name']) for x in quality_profiles]}"
                 )
                 self.radarr._quality_profiles = quality_profiles
+
+            root_folders = []
+            if not isinstance(settings.radarr_movie_paths, list):
+                settings.radarr_movie_paths = [settings.radarr_movie_paths]
+            for i in settings.radarr_movie_paths:
+                logger.debug(f"Looking up/validating Radarr root folder for [{i}]...")
+                foundPath = self.radarr.lookup_root_folder(i)
+                if not foundPath:
+                    logger.error(f"Radarr root folder path/id [{i}] is invalid!")
+                else:
+                    logger.debug(f"Found Radarr root folder for [{i}]: [{foundPath}]")
+                    root_folders.append(foundPath)
+            if not len(root_folders):
+                logger.error(
+                    f"No valid Radarr root folder(s) provided! Using all of the root folders I found in Radarr: {self.radarr._root_folders}"
+                )
+            else:
+                logger.debug(
+                    f"Using the following Radarr root folder(s): {[(x['id'], x['path']) for x in root_folders]}"
+                )
+                self.radarr._root_folders = root_folders
+
         self.conversations = {}
         if not hasattr(settings, "searcharr_admin_password"):
             settings.searcharr_admin_password = uuid.uuid4().hex
@@ -487,200 +530,146 @@ class Searcharr(object):
                     reply_markup=reply_markup,
                 )
         elif op == "add":
+            r = convo["results"][i]
+            additional_data = self._get_add_data(cid)
+            logger.debug(f"{additional_data=}")
             paths = (
-                self.sonarr.get_root_folders()
+                self.sonarr._root_folders
                 if convo["type"] == "series"
-                else self.radarr.get_root_folders()
+                else self.radarr._root_folders
                 if convo["type"] == "movie"
                 else []
             )
-            r = convo["results"][i]
-            if len(paths) > 1:
-                reply_message, reply_markup = self._prepare_response(
-                    convo["type"],
-                    r,
-                    cid,
-                    i,
-                    len(convo["results"]),
-                    add=True,
-                    paths=paths,
-                )
-                try:
-                    query.message.edit_media(
-                        media=InputMediaPhoto(r["remotePoster"]),
-                        reply_markup=reply_markup,
+            if not additional_data.get("p"):
+                if len(paths) > 1:
+                    reply_message, reply_markup = self._prepare_response(
+                        convo["type"],
+                        r,
+                        cid,
+                        i,
+                        len(convo["results"]),
+                        add=True,
+                        paths=paths,
                     )
-                except BadRequest as e:
-                    if str(e) == "Wrong type of the web page content":
-                        logger.error(
-                            f"Error sending photo [{r['remotePoster']}]: BadRequest: {e}. Attempting to send with default poster..."
-                        )
+                    try:
                         query.message.edit_media(
-                            media=InputMediaPhoto(
-                                "https://artworks.thetvdb.com/banners/images/missing/movie.jpg"
-                            ),
+                            media=InputMediaPhoto(r["remotePoster"]),
                             reply_markup=reply_markup,
                         )
-                    else:
-                        raise
-                query.bot.edit_message_caption(
-                    chat_id=query.message.chat_id,
-                    message_id=query.message.message_id,
-                    caption=reply_message,
-                    reply_markup=reply_markup,
-                )
-            elif len(paths) == 1:
-                try:
-                    if convo["type"] == "series":
-                        added = self.sonarr.add_series(
-                            series_info=r,
-                            path=paths[0]["path"],
-                            quality=settings.sonarr_quality_profile_id,
-                            monitored=settings.sonarr_add_monitored,
-                            search=settings.sonarr_search_on_add,
-                            tag=f"searcharr-{query.from_user.username if query.from_user.username else query.from_user.id}"
-                            if settings.sonarr_tag_with_username
-                            else None,
-                        )
-                    elif convo["type"] == "movie":
-                        added = self.radarr.add_movie(
-                            movie_info=r,
-                            path=paths[0]["path"],
-                            quality=settings.radarr_quality_profile_id,
-                            monitored=settings.radarr_add_monitored,
-                            search=settings.radarr_search_on_add,
-                            tag=f"searcharr-{query.from_user.username if query.from_user.username else query.from_user.id}"
-                            if settings.radarr_tag_with_username
-                            else None,
-                            min_avail=settings.radarr_min_availability,
-                        )
-                    else:
-                        added = False
-                except Exception as e:
-                    logger.error(f"Error adding {convo['type']}: {e}")
-                    added = False
-                if added:
+                    except BadRequest as e:
+                        if str(e) == "Wrong type of the web page content":
+                            logger.error(
+                                f"Error sending photo [{r['remotePoster']}]: BadRequest: {e}. Attempting to send with default poster..."
+                            )
+                            query.message.edit_media(
+                                media=InputMediaPhoto(
+                                    "https://artworks.thetvdb.com/banners/images/missing/movie.jpg"
+                                ),
+                                reply_markup=reply_markup,
+                            )
+                        else:
+                            raise
+                    query.bot.edit_message_caption(
+                        chat_id=query.message.chat_id,
+                        message_id=query.message.message_id,
+                        caption=reply_message,
+                        reply_markup=reply_markup,
+                    )
+                    query.answer()
+                    return
+                elif len(paths) == 1:
+                    logger.debug(
+                        f"Only one root folder enabled. Adding/Updating additional data for cid=[{cid}], key=[p], value=[{paths[0]['id']}]..."
+                    )
+                    self._update_add_data(cid, "p", paths[0]["path"])
+                else:
                     self._delete_conversation(cid)
-                    query.message.reply_text(f"Successfully added {r['title']}!")
-                    query.message.delete()
-                else:
                     query.message.reply_text(
-                        f"Unspecified error encountered while adding {convo['type']}!"
+                        f"Error adding {convo['type']}: no root folders enabled for {'Sonarr' if convo['type'] == 'series' else 'Radarr'}! Please check your Searcharr configuration and try again."
                     )
+                    query.message.delete()
+                    query.answer()
+                    return
             else:
-                self._delete_conversation(cid)
-                query.message.reply_text(
-                    f"Error adding {convo['type']}: no root folders found in {'Sonarr' if convo['type'] == 'series' else 'Radarr'}! Please check your configuration in {'Sonarr' if convo['type'] == 'series' else 'Radarr'} and try again."
-                )
-                query.message.delete()
-        elif op.startswith("addto:"):
-            r = convo["results"][i]
-            paths = (
-                self.sonarr.get_root_folders()
-                if convo["type"] == "series"
-                else self.radarr.get_root_folders()
-                if convo["type"] == "movie"
-                else []
-            )
-            pathId = op.split(":")[1]
-            try:
-                int(pathId)  # Check if pathId is an int - was full path in v1.3.2
-            except ValueError:
-                path = pathId
-                logger.debug(
-                    f"Detected non-integer path id: [{path}], using that as the full path..."
-                )
-            else:
-                path = next((p["path"] for p in paths if p["id"] == int(pathId)), None)
-                logger.debug(f"Path id [{pathId}] lookup result: [{path}]")
-
-            self._update_add_data(cid, "p", path)
-
-            quality_profiles = (
-                self.sonarr._quality_profiles
-                if convo["type"] == "series"
-                else self.radarr._quality_profiles
-            )
-            if len(quality_profiles) > 1:
-                # prepare response to prompt user to select quality profile, and return
-                reply_message, reply_markup = self._prepare_response(
-                    convo["type"],
-                    r,
-                    cid,
-                    i,
-                    len(convo["results"]),
-                    add=True,
-                    quality_profiles=quality_profiles,
-                )
                 try:
-                    query.message.edit_media(
-                        media=InputMediaPhoto(r["remotePoster"]),
-                        reply_markup=reply_markup,
+                    int(additional_data.get("p"))
+                except ValueError:
+                    # Value is already the full path
+                    pass
+                else:
+                    # Translate id to actual path
+                    path = next(
+                        (
+                            p["path"]
+                            for p in paths
+                            if p["id"] == int(additional_data["p"])
+                        ),
+                        None,
                     )
-                except BadRequest as e:
-                    if str(e) == "Wrong type of the web page content":
-                        logger.error(
-                            f"Error sending photo [{r['remotePoster']}]: BadRequest: {e}. Attempting to send with default poster..."
-                        )
+                    logger.debug(
+                        f"Path id [{additional_data['p']}] lookup result: [{path}]"
+                    )
+                    if path:
+                        self._update_add_data(cid, "p", path)
+
+            if not additional_data.get("q"):
+                quality_profiles = (
+                    self.sonarr._quality_profiles
+                    if convo["type"] == "series"
+                    else self.radarr._quality_profiles
+                )
+                if len(quality_profiles) > 1:
+                    # prepare response to prompt user to select quality profile, and return
+                    reply_message, reply_markup = self._prepare_response(
+                        convo["type"],
+                        r,
+                        cid,
+                        i,
+                        len(convo["results"]),
+                        add=True,
+                        quality_profiles=quality_profiles,
+                    )
+                    try:
                         query.message.edit_media(
-                            media=InputMediaPhoto(
-                                "https://artworks.thetvdb.com/banners/images/missing/movie.jpg"
-                            ),
+                            media=InputMediaPhoto(r["remotePoster"]),
                             reply_markup=reply_markup,
                         )
-                    else:
-                        raise
-                query.bot.edit_message_caption(
-                    chat_id=query.message.chat_id,
-                    message_id=query.message.message_id,
-                    caption=reply_message,
-                    reply_markup=reply_markup,
-                )
-                query.answer()
-                return
-            else:
-                # continue to add, since there's only 1 quality profile enabled
-                quality_profile_id = quality_profiles[0]["id"]
-                self._update_add_data(cid, "q", quality_profile_id)
-
-            try:
-                if convo["type"] == "series":
-                    added = self.sonarr.add_series(
-                        series_info=r,
-                        monitored=settings.sonarr_add_monitored,
-                        search=settings.sonarr_search_on_add,
-                        tag=f"searcharr-{query.from_user.username if query.from_user.username else query.from_user.id}"
-                        if settings.sonarr_tag_with_username
-                        else None,
-                        additional_data=self._get_add_data(cid),
+                    except BadRequest as e:
+                        if str(e) == "Wrong type of the web page content":
+                            logger.error(
+                                f"Error sending photo [{r['remotePoster']}]: BadRequest: {e}. Attempting to send with default poster..."
+                            )
+                            query.message.edit_media(
+                                media=InputMediaPhoto(
+                                    "https://artworks.thetvdb.com/banners/images/missing/movie.jpg"
+                                ),
+                                reply_markup=reply_markup,
+                            )
+                        else:
+                            raise
+                    query.bot.edit_message_caption(
+                        chat_id=query.message.chat_id,
+                        message_id=query.message.message_id,
+                        caption=reply_message,
+                        reply_markup=reply_markup,
                     )
-                elif convo["type"] == "movie":
-                    added = self.radarr.add_movie(
-                        movie_info=r,
-                        monitored=settings.radarr_add_monitored,
-                        search=settings.radarr_search_on_add,
-                        tag=f"searcharr-{query.from_user.username if query.from_user.username else query.from_user.id}"
-                        if settings.radarr_tag_with_username
-                        else None,
-                        min_avail=settings.radarr_min_availability,
-                        additional_data=self._get_add_data(cid),
+                    query.answer()
+                    return
+                elif len(quality_profiles) == 1:
+                    logger.debug(
+                        f"Only one quality profile enabled. Adding/Updating additional data for cid=[{cid}], key=[q], value=[{quality_profiles[0]['id']}]..."
                     )
+                    self._update_add_data(cid, "q", quality_profiles[0]["id"])
                 else:
-                    added = False
-            except Exception as e:
-                logger.error(f"Error adding {convo['type']}: {e}")
-                added = False
-            logger.debug(f"Result of attempt to add {convo['type']}: {added}")
-            if added:
-                self._delete_conversation(cid)
-                query.message.reply_text(f"Successfully added {r['title']}!")
-                query.message.delete()
-            else:
-                query.message.reply_text(
-                    f"Unspecified error encountered while adding {convo['type']}!"
-                )
-        elif op.startswith("addqp"):
-            r = convo["results"][i]
+                    self._delete_conversation(cid)
+                    query.message.reply_text(
+                        f"Error adding {convo['type']}: no quality profiles enabled for {'Sonarr' if convo['type'] == 'series' else 'Radarr'}! Please check your Searcharr configuration and try again."
+                    )
+                    query.message.delete()
+                    query.answer()
+                    return
+
+            logger.debug("All data is accounted for, proceeding to add...")
             try:
                 if convo["type"] == "series":
                     added = self.sonarr.add_series(
@@ -885,7 +874,7 @@ class Searcharr(object):
                         [
                             InlineKeyboardButton(
                                 f"Add Quality: {q['name']}",
-                                callback_data=f"{cid}^^^{i}^^^addqp^^q={q['id']}",
+                                callback_data=f"{cid}^^^{i}^^^add^^q={q['id']}",
                             )
                         ],
                     )
@@ -899,7 +888,7 @@ class Searcharr(object):
                         [
                             InlineKeyboardButton(
                                 f"Add to {p['path']}",
-                                callback_data=f"{cid}^^^{i}^^^addto:{p['id']}",
+                                callback_data=f"{cid}^^^{i}^^^add^^p={p['id']}",
                             )
                         ],
                     )

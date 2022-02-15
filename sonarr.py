@@ -24,6 +24,7 @@ class Sonarr(object):
             )
         self.api_url = api_url + "/api/{endpoint}?apikey=" + api_key
         self._quality_profiles = self.get_all_quality_profiles()
+        self._root_folders = self.get_root_folders()
         self._all_series = {}
         self.get_all_series()
 
@@ -195,6 +196,13 @@ class Sonarr(object):
 
     def get_all_quality_profiles(self):
         return self._api_get("profile", {}) or None
+
+    def lookup_root_folder(self, v):
+        # Look up root folder from a path or id
+        return next(
+            (x for x in self._root_folders if str(v) in [x["path"], str(x["id"])]),
+            None,
+        )
 
     def _api_get(self, endpoint, params={}):
         url = self.api_url.format(endpoint=endpoint)
