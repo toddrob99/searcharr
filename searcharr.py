@@ -95,6 +95,11 @@ class Searcharr(object):
                 self.sonarr._quality_profiles = quality_profiles
 
             root_folders = []
+            if not hasattr(settings, "sonarr_series_paths"):
+                settings.sonarr_series_paths = []
+                logger.warning(
+                    'No sonarr_series_paths setting detected. Please set one in settings.py (sonarr_series_paths=["/path/1", "/path/2"]). Proceeding with all root folders configured in Sonarr.'
+                )
             if not isinstance(settings.sonarr_series_paths, list):
                 settings.sonarr_series_paths = [settings.sonarr_series_paths]
             for i in settings.sonarr_series_paths:
@@ -148,6 +153,11 @@ class Searcharr(object):
                 self.radarr._quality_profiles = quality_profiles
 
             root_folders = []
+            if not hasattr(settings, "radarr_movie_paths"):
+                settings.radarr_movie_paths = []
+                logger.warning(
+                    'No radarr_movie_paths setting detected. Please set one in settings.py (radarr_movie_paths=["/path/1", "/path/2"]). Proceeding with all root folders configured in Radarr.'
+                )
             if not isinstance(settings.radarr_movie_paths, list):
                 settings.radarr_movie_paths = [settings.radarr_movie_paths]
             for i in settings.radarr_movie_paths:
