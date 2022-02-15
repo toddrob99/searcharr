@@ -85,7 +85,7 @@ class Searcharr(object):
                     )
                     quality_profiles.append(foundProfile)
             if not len(quality_profiles):
-                logger.error(
+                logger.warning(
                     f"No valid Sonarr quality profile(s) provided! Using all of the quality profiles I found in Sonarr: {self.sonarr._quality_profiles}"
                 )
             else:
@@ -111,7 +111,7 @@ class Searcharr(object):
                     logger.debug(f"Found Sonarr root folder for [{i}]: [{foundPath}]")
                     root_folders.append(foundPath)
             if not len(root_folders):
-                logger.error(
+                logger.warning(
                     f"No valid Sonarr root folder(s) provided! Using all of the root folders I found in Sonarr: {self.sonarr._root_folders}"
                 )
             else:
@@ -143,7 +143,7 @@ class Searcharr(object):
                     )
                     quality_profiles.append(foundProfile)
             if not len(quality_profiles):
-                logger.error(
+                logger.warning(
                     f"No valid Radarr quality profile(s) provided! Using all of the quality profiles I found in Radarr: {self.radarr._quality_profiles}"
                 )
             else:
@@ -169,7 +169,7 @@ class Searcharr(object):
                     logger.debug(f"Found Radarr root folder for [{i}]: [{foundPath}]")
                     root_folders.append(foundPath)
             if not len(root_folders):
-                logger.error(
+                logger.warning(
                     f"No valid Radarr root folder(s) provided! Using all of the root folders I found in Radarr: {self.radarr._root_folders}"
                 )
             else:
