@@ -1,5 +1,6 @@
 # Searcharr
-## Sonarr & Radarr Telegram Bot
+[![Docker Pulls](https://img.shields.io/docker/pulls/toddrob/searcharr?style=plastic)](https://hub.docker.com/r/toddrob/searcharr)
+### Sonarr & Radarr Telegram Bot
 ### By Todd Roberts
 https://github.com/toddrob99/searcharr
 
