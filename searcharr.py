@@ -119,6 +119,44 @@ class Searcharr(object):
                     f"Using the following Sonarr root folder(s): {[(x['id'], x['path']) for x in root_folders]}"
                 )
                 self.sonarr._root_folders = root_folders
+            if not hasattr(settings, "sonarr_tag_with_username"):
+                settings.sonarr_tag_with_username = True
+                logger.warning(
+                    "No sonarr_tag_with_username setting found. Please add sonarr_tag_with_username to settings.py (sonarr_tag_with_username=True or sonarr_tag_with_username=False). Defaulting to True."
+                )
+            if not hasattr(settings, "sonarr_series_command_aliases"):
+                settings.sonarr_series_command_aliases = ["series"]
+                logger.warning(
+                    'No sonarr_series_command_aliases setting found. Please add sonarr_series_command_aliases to settings.py (e.g. sonarr_series_command_aliases=["series", "tv"]. Defaulting to ["series"].'
+                )
+            if not hasattr(settings, "sonarr_season_monitor_prompt"):
+                settings.sonarr_season_monitor_prompt = False
+                logger.warning(
+                    "No sonarr_season_monitor_prompt setting found. Please add sonarr_season_monitor_prompt to settings.py (e.g. sonarr_season_monitor_prompt=True if you want users to choose whether to monitor all/first/latest season(s). Defaulting to False."
+                )
+            if not hasattr(settings, "sonarr_forced_tags"):
+                settings.sonarr_forced_tags = []
+                logger.warning(
+                    'No sonarr_forced_tags setting found. Please add sonarr_forced_tags to settings.py (e.g. sonarr_forced_tags=["tag-1", "tag-2"]) if you want specific tags added to each series. Defaulting to empty list ([]).'
+                )
+            if not hasattr(settings, "sonarr_allow_user_to_select_tags"):
+                settings.sonarr_allow_user_to_select_tags = False
+                logger.warning(
+                    "No sonarr_allow_user_to_select_tags setting found. Please add sonarr_allow_user_to_select_tags to settings.py (e.g. sonarr_allow_user_to_select_tags=True) if you want users to be able to select tags when adding a series. Defaulting to False."
+                )
+            if not hasattr(settings, "sonarr_user_selectable_tags"):
+                settings.sonarr_user_selectable_tags = []
+                logger.warning(
+                    'No sonarr_user_selectable_tags setting found. Please add sonarr_user_selectable_tags to settings.py (e.g. sonarr_user_selectable_tags=["tag-1", "tag-2"]) if you want to limit the tags a user can select. Defaulting to empty list ([]), which will present the user with all tags.'
+                )
+            for t in settings.sonarr_user_selectable_tags:
+                if t_id := self.sonarr.get_tag_id(t):
+                    logger.debug(
+                        f"Tag id [{t_id}] for user-selectable Sonarr tag [{t}]"
+                    )
+            for t in settings.sonarr_forced_tags:
+                if t_id := self.sonarr.get_tag_id(t):
+                    logger.debug(f"Tag id [{t_id}] for forced Sonarr tag [{t}]")
         self.radarr = (
             radarr.Radarr(settings.radarr_url, settings.radarr_api_key, args.verbose)
             if settings.radarr_enabled
@@ -177,6 +215,44 @@ class Searcharr(object):
                     f"Using the following Radarr root folder(s): {[(x['id'], x['path']) for x in root_folders]}"
                 )
                 self.radarr._root_folders = root_folders
+            if not hasattr(settings, "radarr_tag_with_username"):
+                settings.radarr_tag_with_username = True
+                logger.warning(
+                    "No radarr_tag_with_username setting found. Please add radarr_tag_with_username to settings.py (radarr_tag_with_username=True or radarr_tag_with_username=False). Defaulting to True."
+                )
+            if not hasattr(settings, "radarr_min_availability"):
+                settings.radarr_min_availability = "released"
+                logger.warning(
+                    'No radarr_min_availability setting found. Please add radarr_min_availability to settings.py (options: "released", "announced", "inCinema"). Defaulting to "released".'
+                )
+            if not hasattr(settings, "radarr_movie_command_aliases"):
+                settings.radarr_movie_command_aliases = ["movie"]
+                logger.warning(
+                    'No radarr_movie_command_aliases setting found. Please add radarr_movie_command_aliases to settings.py (e.g. radarr_movie_command_aliases=["movie", "mv"]. Defaulting to ["movie"].'
+                )
+            if not hasattr(settings, "radarr_forced_tags"):
+                settings.radarr_forced_tags = []
+                logger.warning(
+                    'No radarr_forced_tags setting found. Please add radarr_forced_tags to settings.py (e.g. radarr_forced_tags=["tag-1", "tag-2"]) if you want specific tags added to each movie. Defaulting to empty list ([]).'
+                )
+            if not hasattr(settings, "radarr_allow_user_to_select_tags"):
+                settings.radarr_allow_user_to_select_tags = True
+                logger.warning(
+                    "No radarr_allow_user_to_select_tags setting found. Please add radarr_allow_user_to_select_tags to settings.py (e.g. radarr_allow_user_to_select_tags=False) if you do not want users to be able to select tags when adding a movie. Defaulting to True."
+                )
+            if not hasattr(settings, "radarr_user_selectable_tags"):
+                settings.radarr_user_selectable_tags = []
+                logger.warning(
+                    'No radarr_user_selectable_tags setting found. Please add radarr_user_selectable_tags to settings.py (e.g. radarr_user_selectable_tags=["tag-1", "tag-2"]) if you want to limit the tags a user can select. Defaulting to empty list ([]), which will present the user with all tags.'
+                )
+            for t in settings.radarr_user_selectable_tags:
+                if t_id := self.radarr.get_tag_id(t):
+                    logger.debug(
+                        f"Tag id [{t_id}] for user-selectable Radarr tag [{t}]"
+                    )
+            for t in settings.radarr_forced_tags:
+                if t_id := self.radarr.get_tag_id(t):
+                    logger.debug(f"Tag id [{t_id}] for forced Radarr tag [{t}]")
 
         self.conversations = {}
         if not hasattr(settings, "searcharr_admin_password"):
@@ -187,36 +263,6 @@ class Searcharr(object):
         if settings.searcharr_password == "":
             logger.warning(
                 'Password is blank. This will allow anyone to add series/movies using your bot. If this is unexpected, set a password in settings.py (searcharr_password="your password").'
-            )
-        if not hasattr(settings, "sonarr_tag_with_username"):
-            settings.sonarr_tag_with_username = True
-            logger.warning(
-                "No sonarr_tag_with_username setting found. Please add sonarr_tag_with_username to settings.py (sonarr_tag_with_username=True or sonarr_tag_with_username=False). Defaulting to True."
-            )
-        if not hasattr(settings, "radarr_tag_with_username"):
-            settings.radarr_tag_with_username = True
-            logger.warning(
-                "No radarr_tag_with_username setting found. Please add radarr_tag_with_username to settings.py (radarr_tag_with_username=True or radarr_tag_with_username=False). Defaulting to True."
-            )
-        if not hasattr(settings, "radarr_min_availability"):
-            settings.radarr_min_availability = "released"
-            logger.warning(
-                'No radarr_min_availability setting found. Please add radarr_min_availability to settings.py (options: "released", "announced", "inCinema"). Defaulting to "released".'
-            )
-        if not hasattr(settings, "sonarr_series_command_aliases"):
-            settings.sonarr_series_command_aliases = ["series"]
-            logger.warning(
-                'No sonarr_series_command_aliases setting found. Please add sonarr_series_command_aliases to settings.py (e.g. sonarr_series_command_aliases=["series", "tv"]. Defaulting to ["series"].'
-            )
-        if not hasattr(settings, "radarr_movie_command_aliases"):
-            settings.radarr_movie_command_aliases = ["movie"]
-            logger.warning(
-                'No radarr_movie_command_aliases setting found. Please add radarr_movie_command_aliases to settings.py (e.g. radarr_movie_command_aliases=["movie", "mv"]. Defaulting to ["movie"].'
-            )
-        if not hasattr(settings, "sonarr_season_monitor_prompt"):
-            settings.sonarr_season_monitor_prompt = False
-            logger.warning(
-                "No sonarr_season_monitor_prompt setting found. Please add sonarr_season_monitor_prompt to settings.py (e.g. sonarr_season_monitor_prompt=True if you want users to choose whether to monitor all/first/latest season(s). Defaulting to False."
             )
 
     def cmd_start(self, update, context):
@@ -732,6 +778,99 @@ class Searcharr(object):
                 query.answer()
                 return
 
+            if convo["type"] == "series":
+                all_tags = self.sonarr.get_filtered_tags(
+                    settings.sonarr_user_selectable_tags
+                )
+                allow_user_to_select_tags = settings.sonarr_allow_user_to_select_tags
+                forced_tags = settings.sonarr_forced_tags
+            elif convo["type"] == "movie":
+                all_tags = self.radarr.get_filtered_tags(
+                    settings.radarr_user_selectable_tags
+                )
+                allow_user_to_select_tags = settings.radarr_allow_user_to_select_tags
+                forced_tags = settings.radarr_forced_tags
+            if allow_user_to_select_tags and not additional_data.get("td"):
+                if not len(all_tags):
+                    logger.warning(
+                        f"User tagging is enabled, but no tags found. Make sure there are tags in {'Sonarr' if convo['type'] == 'series' else 'Radarr'} matching your Searcharr configuration."
+                    )
+                elif not additional_data.get("tt"):
+                    reply_message, reply_markup = self._prepare_response(
+                        convo["type"],
+                        r,
+                        cid,
+                        i,
+                        len(convo["results"]),
+                        add=True,
+                        tags=all_tags,
+                    )
+                    try:
+                        query.message.edit_media(
+                            media=InputMediaPhoto(r["remotePoster"]),
+                            reply_markup=reply_markup,
+                        )
+                    except BadRequest as e:
+                        if str(e) == "Wrong type of the web page content":
+                            logger.error(
+                                f"Error sending photo [{r['remotePoster']}]: BadRequest: {e}. Attempting to send with default poster..."
+                            )
+                            query.message.edit_media(
+                                media=InputMediaPhoto(
+                                    "https://artworks.thetvdb.com/banners/images/missing/movie.jpg"
+                                ),
+                                reply_markup=reply_markup,
+                            )
+                        else:
+                            raise
+                    query.bot.edit_message_caption(
+                        chat_id=query.message.chat_id,
+                        message_id=query.message.message_id,
+                        caption=reply_message,
+                        reply_markup=reply_markup,
+                    )
+                    query.answer()
+                    return
+                else:
+                    tag_ids = (
+                        additional_data.get("t", "").split(",")
+                        if len(additional_data.get("t", ""))
+                        else []
+                    )
+                    tag_ids.append(additional_data["tt"])
+                    logger.debug(f"Adding tag [{additional_data['tt']}]")
+                    self._update_add_data(cid, "t", ",".join(tag_ids))
+                    return
+
+            tags = (
+                additional_data.get("t").split(",")
+                if len(additional_data.get("t", ""))
+                else []
+            )
+            logger.debug(f"{tags=}")
+            if convo["type"] == "series":
+                get_tag_id = self.sonarr.get_tag_id
+                tag_with_username = settings.sonarr_tag_with_username
+            elif convo["type"] == "movie":
+                get_tag_id = self.radarr.get_tag_id
+                tag_with_username = settings.radarr_tag_with_username
+            if tag_with_username:
+                tag = f"searcharr-{query.from_user.username if query.from_user.username else query.from_user.id}"
+                if tag_id := get_tag_id(tag):
+                    tags.append(str(tag_id))
+                else:
+                    self.logger.warning(
+                        f"Tag lookup/creation failed for [{tag}]. This tag will not be added to the {convo['type']}."
+                    )
+            for tag in forced_tags:
+                if tag_id := get_tag_id(tag):
+                    tags.append(str(tag_id))
+                else:
+                    self.logger.warning(
+                        f"Tag lookup/creation failed for forced tag [{tag}]. This tag will not be added to the {convo['type']}."
+                    )
+            self._update_add_data(cid, "t", ",".join(list(set(tags))))
+
             logger.debug("All data is accounted for, proceeding to add...")
             try:
                 if convo["type"] == "series":
@@ -739,9 +878,6 @@ class Searcharr(object):
                         series_info=r,
                         monitored=settings.sonarr_add_monitored,
                         search=settings.sonarr_search_on_add,
-                        tag=f"searcharr-{query.from_user.username if query.from_user.username else query.from_user.id}"
-                        if settings.sonarr_tag_with_username
-                        else None,
                         additional_data=self._get_add_data(cid),
                     )
                 elif convo["type"] == "movie":
@@ -749,9 +885,6 @@ class Searcharr(object):
                         movie_info=r,
                         monitored=settings.radarr_add_monitored,
                         search=settings.radarr_search_on_add,
-                        tag=f"searcharr-{query.from_user.username if query.from_user.username else query.from_user.id}"
-                        if settings.radarr_tag_with_username
-                        else None,
                         min_avail=settings.radarr_min_availability,
                         additional_data=self._get_add_data(cid),
                     )
@@ -900,6 +1033,7 @@ class Searcharr(object):
         paths=None,
         quality_profiles=None,
         monitor_options=None,
+        tags=None,
     ):
         keyboard = []
         keyboardNavRow = []
@@ -932,7 +1066,25 @@ class Searcharr(object):
         keyboard.append(keyboardNavRow)
 
         if add:
-            if monitor_options:
+            if tags:
+                for tag in tags[:12]:
+                    keyboard.append(
+                        [
+                            InlineKeyboardButton(
+                                f"Add Tag: {tag['label']}",
+                                callback_data=f"{cid}^^^{i}^^^add^^tt={tag['id']}",
+                            )
+                        ],
+                    )
+                keyboard.append(
+                    [
+                        InlineKeyboardButton(
+                            "Finished Tagging",
+                            callback_data=f"{cid}^^^{i}^^^add^^td=1",
+                        )
+                    ],
+                )
+            elif monitor_options:
                 for k, o in enumerate(monitor_options):
                     keyboard.append(
                         [
@@ -952,11 +1104,7 @@ class Searcharr(object):
                             )
                         ],
                     )
-            else:
-                if not paths and kind == "series":
-                    paths = self.sonarr.get_root_folders()
-                elif not paths and kind == "movie":
-                    paths = self.radarr.get_root_folders()
+            elif paths:
                 for p in paths:
                     keyboard.append(
                         [

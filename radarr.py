@@ -85,7 +85,6 @@ class Radarr(object):
         tmdb_id=None,
         search=True,
         monitored=True,
-        tag=None,
         min_avail="released",
         additional_data={},
     ):
@@ -103,6 +102,11 @@ class Radarr(object):
 
         path = additional_data["p"]
         quality = additional_data["q"]
+        tags = additional_data.get("t", "")
+        if len(tags):
+            tag_ids = [int(x) for x in tags.split(",")]
+        else:
+            tag_ids = []
 
         params = {
             "tmdbId": movie_info["tmdbId"],
@@ -114,15 +118,9 @@ class Radarr(object):
             "rootFolderPath": path,
             "monitored": monitored,
             "minimumAvailability": min_avail,
+            "tags": tag_ids,
             "addOptions": {"searchForMovie": search},
         }
-        if tag:
-            if tag_id := self.get_tag_id(tag):
-                params.update({"tags": [tag_id]})
-            else:
-                self.logger.warning(
-                    "Tag lookup/creation failed. The movie will not be tagged."
-                )
 
         return self._api_post("movie", params)
 
@@ -157,6 +155,24 @@ class Radarr(object):
         r = self._api_get("tag", {})
         self.logger.debug(f"Result of API call to get all tags: {r}")
         return [] if not r else r
+
+    def get_filtered_tags(self, allowed_tags):
+        r = self.get_all_tags()
+        if not r:
+            return []
+        elif allowed_tags == []:
+            return [
+                x
+                for x in r
+                if not x["label"].startswith("searcharr-")
+            ]
+        else:
+            return [
+                x
+                for x in r
+                if not x["label"].startswith("searcharr-")
+                and (x["label"] in allowed_tags or x["id"] in allowed_tags)
+            ]
 
     def add_tag(self, tag):
         params = {

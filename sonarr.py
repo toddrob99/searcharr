@@ -84,7 +84,6 @@ class Sonarr(object):
         season_folders=True,
         monitored=True,
         unmonitor_existing=True,
-        tag=None,
         additional_data={},
     ):
         if not series_info and not tvdb_id:
@@ -119,6 +118,11 @@ class Sonarr(object):
             for s in series_info["seasons"]:
                 if s["seasonNumber"] != max_season:
                     s.update({"monitored": False})
+        tags = additional_data.get("t", "")
+        if len(tags):
+            tag_ids = [int(x) for x in tags.split(",")]
+        else:
+            tag_ids = []
 
         self.logger.debug(f"{series_info['seasons']=}")
 
@@ -134,19 +138,13 @@ class Sonarr(object):
             "seasonFolder": season_folders,
             "monitored": monitored,
             "seriesType": "anime" if additional_data.get("st") == "a" else "standard",
+            "tags": tag_ids,
             "addOptions": {
                 "ignoreEpisodesWithFiles": unmonitor_existing,
                 "ignoreEpisodesWithoutFiles": "false",
                 "searchForMissingEpisodes": search,
             },
         }
-        if tag:
-            if tag_id := self.get_tag_id(tag):
-                params.update({"tags": [tag_id]})
-            else:
-                self.logger.warning(
-                    "Tag lookup/creation failed. The series will not be tagged."
-                )
 
         return self._api_post("series", params)
 
@@ -169,6 +167,24 @@ class Sonarr(object):
         r = self._api_get("tag", {})
         self.logger.debug(f"Result of API call to get all tags: {r}")
         return [] if not r else r
+
+    def get_filtered_tags(self, allowed_tags):
+        r = self.get_all_tags()
+        if not r:
+            return []
+        elif allowed_tags == []:
+            return [
+                x
+                for x in r
+                if not x["label"].startswith("searcharr-")
+            ]
+        else:
+            return [
+                x
+                for x in r
+                if not x["label"].startswith("searcharr-")
+                and (x["label"] in allowed_tags or x["id"] in allowed_tags)
+            ]
 
     def add_tag(self, tag):
         params = {
