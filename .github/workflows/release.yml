@@ -1,9 +1,8 @@
-name: beta
+name: release
 
 on:
-  push:
-    branches:
-      - 'beta'
+  release:
+    types: [released]
 
 jobs:
   docker:
@@ -20,11 +19,11 @@ jobs:
         uses: docker/login-action@v1 
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
-          password: ${{ secrets.DOCKERHUB_TOKEN }}
+          password: ${{ secrets.DOCKERHUB_PASSWORD }}
       -
         name: Build and push
         uses: docker/build-push-action@v2
         with:
           platforms: linux/amd64,linux/arm64,linux/arm/v7
           push: true
-          tags: toddrob/searcharr:beta
+          tags: toddrob/searcharr:${{github.action_ref}},toddrob/searcharr:latest
