@@ -23,6 +23,8 @@ class Sonarr(object):
                 "Invalid Sonarr URL detected. Please update your settings to include http:// or https:// on the beginning of the URL."
             )
         self.api_url = api_url + "/api/{endpoint}?apikey=" + api_key
+        self._quality_profiles = self.get_all_quality_profiles()
+        self._root_folders = self.get_root_folders()
         self._all_series = {}
         self.get_all_series()
 
@@ -55,6 +57,7 @@ class Sonarr(object):
                 "tvRageId": x.get("tvRageId"),
                 "images": x.get("images"),
                 "seasons": x.get("seasons"),
+                "genres": x.get("genres", []),
             }
             for x in r
         ]
@@ -77,13 +80,11 @@ class Sonarr(object):
         self,
         series_info=None,
         tvdb_id=None,
-        path=None,
-        quality=None,
         search=True,
         season_folders=True,
         monitored=True,
         unmonitor_existing=True,
-        tag=None,
+        additional_data={},
     ):
         if not series_info and not tvdb_id:
             return False
@@ -94,6 +95,36 @@ class Sonarr(object):
                 series_info = series_info[0]
             else:
                 return False
+
+        self.logger.debug(f"Additional data: {additional_data}")
+
+        path = additional_data["p"]
+        quality = additional_data["q"]
+        monitor_options = int(additional_data.get("m", 0))
+        if monitor_options == 1:
+            # Monitor only the first season
+            for s in series_info["seasons"]:
+                if s["seasonNumber"] != 1:
+                    s.update({"monitored": False})
+        elif monitor_options == 2:
+            if next(
+                (x for x in series_info["seasons"] if x["seasonNumber"] == 0), False
+            ):
+                # There is a Season 0
+                max_season = len(series_info["seasons"]) - 1
+            else:
+                max_season = len(series_info["seasons"])
+            # Monitor only the latest season
+            for s in series_info["seasons"]:
+                if s["seasonNumber"] != max_season:
+                    s.update({"monitored": False})
+        tags = additional_data.get("t", "")
+        if len(tags):
+            tag_ids = [int(x) for x in tags.split(",")]
+        else:
+            tag_ids = []
+
+        self.logger.debug(f"{series_info['seasons']=}")
 
         params = {
             "tvdbId": series_info["tvdbId"],
@@ -106,19 +137,14 @@ class Sonarr(object):
             "tvRageId": series_info["tvRageId"],
             "seasonFolder": season_folders,
             "monitored": monitored,
+            "seriesType": "anime" if additional_data.get("st") == "a" else "standard",
+            "tags": tag_ids,
             "addOptions": {
                 "ignoreEpisodesWithFiles": unmonitor_existing,
                 "ignoreEpisodesWithoutFiles": "false",
                 "searchForMissingEpisodes": search,
             },
         }
-        if tag:
-            if tag_id := self.get_tag_id(tag):
-                params.update({"tags": [tag_id]})
-            else:
-                self.logger.warning(
-                    "Tag lookup/creation failed. The series will not be tagged."
-                )
 
         return self._api_post("series", params)
 
@@ -141,6 +167,24 @@ class Sonarr(object):
         r = self._api_get("tag", {})
         self.logger.debug(f"Result of API call to get all tags: {r}")
         return [] if not r else r
+
+    def get_filtered_tags(self, allowed_tags):
+        r = self.get_all_tags()
+        if not r:
+            return []
+        elif allowed_tags == []:
+            return [
+                x
+                for x in r
+                if not x["label"].startswith("searcharr-")
+            ]
+        else:
+            return [
+                x
+                for x in r
+                if not x["label"].startswith("searcharr-")
+                and (x["label"] in allowed_tags or x["id"] in allowed_tags)
+            ]
 
     def add_tag(self, tag):
         params = {
@@ -179,14 +223,22 @@ class Sonarr(object):
                 )
             return t.get("id", None)
 
-    def lookup_quality_profile_id(self, v):
-        # Look up quality profile id from a profile name,
-        # Or validate existence of a quality profile id
-        r = self._api_get("profile", {})
-        if not r:
-            return 0
+    def lookup_quality_profile(self, v):
+        # Look up quality profile from a profile name or id
+        return next(
+            (x for x in self._quality_profiles if str(v) in [x["name"], str(x["id"])]),
+            None,
+        )
 
-        return next((x["id"] for x in r if str(v) in [x["name"], str(x["id"])]), 0)
+    def get_all_quality_profiles(self):
+        return self._api_get("profile", {}) or None
+
+    def lookup_root_folder(self, v):
+        # Look up root folder from a path or id
+        return next(
+            (x for x in self._root_folders if str(v) in [x["path"], str(x["id"])]),
+            None,
+        )
 
     def _api_get(self, endpoint, params={}):
         url = self.api_url.format(endpoint=endpoint)
@@ -196,6 +248,7 @@ class Sonarr(object):
         r = requests.get(url)
         if r.status_code not in [200, 201, 202, 204]:
             r.raise_for_status()
+            return None
         else:
             return r.json()
 
@@ -205,5 +258,6 @@ class Sonarr(object):
         r = requests.post(url, json=params)
         if r.status_code not in [200, 201, 202, 204]:
             r.raise_for_status()
+            return None
         else:
             return r.json()

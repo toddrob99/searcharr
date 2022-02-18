@@ -24,6 +24,8 @@ class Radarr(object):
         self.radarr_version = self.discover_version(api_url, api_key)
         if not self.radarr_version.startswith("0."):
             self.api_url = api_url + "/api/v3/{endpoint}?apikey=" + api_key
+        self._quality_profiles = self.get_all_quality_profiles()
+        self._root_folders = self.get_root_folders()
 
     def discover_version(self, api_url, api_key):
         try:
@@ -81,11 +83,10 @@ class Radarr(object):
         self,
         movie_info=None,
         tmdb_id=None,
-        path=None,
-        quality=None,
         search=True,
         monitored=True,
-        tag=None,
+        min_avail="released",
+        additional_data={},
     ):
         if not movie_info and not tmdb_id:
             return False
@@ -97,6 +98,16 @@ class Radarr(object):
             else:
                 return False
 
+        self.logger.debug(f"Additional data: {additional_data}")
+
+        path = additional_data["p"]
+        quality = additional_data["q"]
+        tags = additional_data.get("t", "")
+        if len(tags):
+            tag_ids = [int(x) for x in tags.split(",")]
+        else:
+            tag_ids = []
+
         params = {
             "tmdbId": movie_info["tmdbId"],
             "title": movie_info["title"],
@@ -106,15 +117,10 @@ class Radarr(object):
             "images": movie_info["images"],
             "rootFolderPath": path,
             "monitored": monitored,
+            "minimumAvailability": min_avail,
+            "tags": tag_ids,
             "addOptions": {"searchForMovie": search},
         }
-        if tag:
-            if tag_id := self.get_tag_id(tag):
-                params.update({"tags": [tag_id]})
-            else:
-                self.logger.warning(
-                    "Tag lookup/creation failed. The movie will not be tagged."
-                )
 
         return self._api_post("movie", params)
 
@@ -141,6 +147,7 @@ class Radarr(object):
         r = requests.get(url)
         if r.status_code not in [200, 201, 202, 204]:
             r.raise_for_status()
+            return None
         else:
             return r.json()
 
@@ -148,6 +155,24 @@ class Radarr(object):
         r = self._api_get("tag", {})
         self.logger.debug(f"Result of API call to get all tags: {r}")
         return [] if not r else r
+
+    def get_filtered_tags(self, allowed_tags):
+        r = self.get_all_tags()
+        if not r:
+            return []
+        elif allowed_tags == []:
+            return [
+                x
+                for x in r
+                if not x["label"].startswith("searcharr-")
+            ]
+        else:
+            return [
+                x
+                for x in r
+                if not x["label"].startswith("searcharr-")
+                and (x["label"] in allowed_tags or x["id"] in allowed_tags)
+            ]
 
     def add_tag(self, tag):
         params = {
@@ -186,18 +211,26 @@ class Radarr(object):
                 )
             return t.get("id", None)
 
-    def lookup_quality_profile_id(self, v):
-        # Look up quality profile id from a profile name,
-        # But also allow input of a quality profile id
-        r = (
+    def lookup_quality_profile(self, v):
+        # Look up quality profile from a profile name or id
+        return next(
+            (x for x in self._quality_profiles if str(v) in [x["name"], str(x["id"])]),
+            None,
+        )
+
+    def get_all_quality_profiles(self):
+        return (
             self._api_get("profile", {})
             if self.radarr_version.startswith("0.")
             else self._api_get("qualityProfile", {})
-        )
-        if not r:
-            return 0
+        ) or None
 
-        return next((x["id"] for x in r if str(v) in [x["name"], str(x["id"])]), 0)
+    def lookup_root_folder(self, v):
+        # Look up root folder from a path or id
+        return next(
+            (x for x in self._root_folders if str(v) in [x["path"], str(x["id"])]),
+            None,
+        )
 
     def _api_post(self, endpoint, params={}):
         url = self.api_url.format(endpoint=endpoint)
@@ -205,5 +238,6 @@ class Radarr(object):
         r = requests.post(url, json=params)
         if r.status_code not in [200, 201, 202, 204]:
             r.raise_for_status()
+            return None
         else:
             return r.json()

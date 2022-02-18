@@ -1,5 +1,6 @@
 # Searcharr
-## Sonarr & Radarr Telegram Bot
+[![Docker Pulls](https://img.shields.io/docker/pulls/toddrob/searcharr?style=plastic)](https://hub.docker.com/r/toddrob/searcharr)
+### Sonarr & Radarr Telegram Bot
 ### By Todd Roberts
 https://github.com/toddrob99/searcharr
 
@@ -10,6 +11,8 @@ This bot allows users to add movies to Radarr and series to Sonarr via Telegram 
 ### Configure
 
 Rename `settings-sample.py` to `settings.py`, and edit the settings within the file as necessary.
+
+Detailed descriptions of the available settings are available on the [wiki](https://github.com/toddrob99/searcharr/wiki/Configuration-::-settings.py). 
 
 You are required to update the following settings, at minimum:
 
@@ -44,7 +47,7 @@ Send a private message to your bot saying `/start <password>` where `<password>`
 
 ### Search & Add a Series to Sonarr or a Movie to Radarr
 
-Send the bot a (private or group) message saying `/series <title>` or `/movie <title>`. The bot will reply with information about the first result, along with buttons to move forward and back within the search results, pop out to tvdb, TMDB, or IMDb, add the current series/movie to Sonarr/Radarr, or cancel the search. When you click the button to add the series/movie to Sonarr/Radarr, the bot will ask what root folder to put the series/movie in--unless you only have one root folder configured in Sonarr/Radarr, in which case it will add it straight away.
+Send the bot a (private or group) message saying `/series <title>` or `/movie <title>` (replace with custom command aliases, as configured in `settings.py`). The bot will reply with information about the first result, along with buttons to move forward and back within the search results, pop out to tvdb, TMDB, or IMDb, add the current series/movie to Sonarr/Radarr, or cancel the search. When you click the button to add the series/movie to Sonarr/Radarr, the bot will ask what root folder to put the series/movie in, then what quality profile to use--unless you have only one root folder or quality profile enabled in Searcharr settings, in which case it will skip those steps and add the series/movie straight away.
 
 ### Manage Users
 
@@ -56,7 +59,7 @@ Authenticate by saying `/start <password>` (or `/start@bot_username <password>` 
 
 ![Authenticate](https://github.com/toddrob99/searcharr/blob/main/screenshots/authenticate.png?raw=true)
 
-Search for movie using `/movie <title>` or series using `/series <title>` (behavior is the same). Buttons will appear to open the series/movie info in tvdb, IMDb, or TVDB when those ids are available.
+Search for movie using `/movie <title>` or series using `/series <title>` (behavior is the same for series and movies) (use custom commands configured in `settings.py` if applicable). Buttons will appear to open the series/movie info in tvdb, IMDb, or TVDB when those ids are available.
 
 ![Search Result](https://github.com/toddrob99/searcharr/blob/main/screenshots/add.png?raw=true)
 
@@ -64,9 +67,13 @@ If series/movie already exists in Sonarr/Radarr, the Add button will instead say
 
 ![Already Exists](https://github.com/toddrob99/searcharr/blob/main/screenshots/already-exists.png?raw=true)
 
-If Sonarr/Radarr has multiple root folders configured, you will be prompted to select a root folder after clicking the Add button:
+If Searcharr has multiple root folders configured, you will be prompted to select a root folder:
 
 ![Choose Root Folder](https://github.com/toddrob99/searcharr/blob/main/screenshots/choose-root-folder.png?raw=true)
+
+If Searcharr has multiple quality profiles configured, you will be prompted to select a root folder after selecting a quality profile:
+
+![Choose Quality Profile](https://github.com/toddrob99/searcharr/blob/main/screenshots/choose-quality-profile.png?raw=true)
 
 When the series/movie has been added, or you click Cancel, the search results will be removed:
 

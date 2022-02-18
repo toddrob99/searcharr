@@ -9,6 +9,7 @@ import json
 import os
 import sqlite3
 from threading import Lock
+from urllib.parse import parse_qsl
 import uuid
 
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup, InputMediaPhoto
@@ -20,7 +21,7 @@ import radarr
 import sonarr
 import settings
 
-__version__ = "1.5"
+__version__ = "2.0-b5"
 
 DBPATH = os.path.join(os.path.dirname(os.path.realpath(__file__)), "data")
 DBFILE = "searcharr.db"
@@ -66,46 +67,195 @@ class Searcharr(object):
             else None
         )
         if self.sonarr:
-            logger.debug(
-                f"Looking up Sonarr quality profile id for [{settings.sonarr_quality_profile_id}]..."
-            )
-            foundId = self.sonarr.lookup_quality_profile_id(
-                settings.sonarr_quality_profile_id
-            )
-            if foundId == 0:
-                logger.error(
-                    f"Sonarr quality profile provided in settings [{settings.sonarr_quality_profile_id}] is invalid!"
+            quality_profiles = []
+            if not isinstance(settings.sonarr_quality_profile_id, list):
+                settings.sonarr_quality_profile_id = [
+                    settings.sonarr_quality_profile_id
+                ]
+            for i in settings.sonarr_quality_profile_id:
+                logger.debug(
+                    f"Looking up/validating Sonarr quality profile id for [{i}]..."
+                )
+                foundProfile = self.sonarr.lookup_quality_profile(i)
+                if not foundProfile:
+                    logger.error(f"Sonarr quality profile id/name [{i}] is invalid!")
+                else:
+                    logger.debug(
+                        f"Found Sonarr quality profile for [{i}]: [{foundProfile}]"
+                    )
+                    quality_profiles.append(foundProfile)
+            if not len(quality_profiles):
+                logger.warning(
+                    f"No valid Sonarr quality profile(s) provided! Using all of the quality profiles I found in Sonarr: {self.sonarr._quality_profiles}"
                 )
             else:
-                settings.sonarr_quality_profile_id = foundId
                 logger.debug(
-                    f"Found Sonarr quality profile id: [{settings.sonarr_quality_profile_id}]"
+                    f"Using the following Sonarr quality profile(s): {[(x['id'], x['name']) for x in quality_profiles]}"
                 )
+                self.sonarr._quality_profiles = quality_profiles
+
+            root_folders = []
+            if not hasattr(settings, "sonarr_series_paths"):
+                settings.sonarr_series_paths = []
+                logger.warning(
+                    'No sonarr_series_paths setting detected. Please set one in settings.py (sonarr_series_paths=["/path/1", "/path/2"]). Proceeding with all root folders configured in Sonarr.'
+                )
+            if not isinstance(settings.sonarr_series_paths, list):
+                settings.sonarr_series_paths = [settings.sonarr_series_paths]
+            for i in settings.sonarr_series_paths:
+                logger.debug(f"Looking up/validating Sonarr root folder for [{i}]...")
+                foundPath = self.sonarr.lookup_root_folder(i)
+                if not foundPath:
+                    logger.error(f"Sonarr root folder path/id [{i}] is invalid!")
+                else:
+                    logger.debug(f"Found Sonarr root folder for [{i}]: [{foundPath}]")
+                    root_folders.append(foundPath)
+            if not len(root_folders):
+                logger.warning(
+                    f"No valid Sonarr root folder(s) provided! Using all of the root folders I found in Sonarr: {self.sonarr._root_folders}"
+                )
+            else:
+                logger.debug(
+                    f"Using the following Sonarr root folder(s): {[(x['id'], x['path']) for x in root_folders]}"
+                )
+                self.sonarr._root_folders = root_folders
+            if not hasattr(settings, "sonarr_tag_with_username"):
+                settings.sonarr_tag_with_username = True
+                logger.warning(
+                    "No sonarr_tag_with_username setting found. Please add sonarr_tag_with_username to settings.py (sonarr_tag_with_username=True or sonarr_tag_with_username=False). Defaulting to True."
+                )
+            if not hasattr(settings, "sonarr_series_command_aliases"):
+                settings.sonarr_series_command_aliases = ["series"]
+                logger.warning(
+                    'No sonarr_series_command_aliases setting found. Please add sonarr_series_command_aliases to settings.py (e.g. sonarr_series_command_aliases=["series", "tv"]. Defaulting to ["series"].'
+                )
+            if not hasattr(settings, "sonarr_season_monitor_prompt"):
+                settings.sonarr_season_monitor_prompt = False
+                logger.warning(
+                    "No sonarr_season_monitor_prompt setting found. Please add sonarr_season_monitor_prompt to settings.py (e.g. sonarr_season_monitor_prompt=True if you want users to choose whether to monitor all/first/latest season(s). Defaulting to False."
+                )
+            if not hasattr(settings, "sonarr_forced_tags"):
+                settings.sonarr_forced_tags = []
+                logger.warning(
+                    'No sonarr_forced_tags setting found. Please add sonarr_forced_tags to settings.py (e.g. sonarr_forced_tags=["tag-1", "tag-2"]) if you want specific tags added to each series. Defaulting to empty list ([]).'
+                )
+            if not hasattr(settings, "sonarr_allow_user_to_select_tags"):
+                settings.sonarr_allow_user_to_select_tags = False
+                logger.warning(
+                    "No sonarr_allow_user_to_select_tags setting found. Please add sonarr_allow_user_to_select_tags to settings.py (e.g. sonarr_allow_user_to_select_tags=True) if you want users to be able to select tags when adding a series. Defaulting to False."
+                )
+            if not hasattr(settings, "sonarr_user_selectable_tags"):
+                settings.sonarr_user_selectable_tags = []
+                logger.warning(
+                    'No sonarr_user_selectable_tags setting found. Please add sonarr_user_selectable_tags to settings.py (e.g. sonarr_user_selectable_tags=["tag-1", "tag-2"]) if you want to limit the tags a user can select. Defaulting to empty list ([]), which will present the user with all tags.'
+                )
+            for t in settings.sonarr_user_selectable_tags:
+                if t_id := self.sonarr.get_tag_id(t):
+                    logger.debug(
+                        f"Tag id [{t_id}] for user-selectable Sonarr tag [{t}]"
+                    )
+            for t in settings.sonarr_forced_tags:
+                if t_id := self.sonarr.get_tag_id(t):
+                    logger.debug(f"Tag id [{t_id}] for forced Sonarr tag [{t}]")
         self.radarr = (
             radarr.Radarr(settings.radarr_url, settings.radarr_api_key, args.verbose)
             if settings.radarr_enabled
             else None
         )
         if self.radarr:
-            logger.debug(
-                f"Looking up Radarr quality profile id for [{settings.radarr_quality_profile_id}]..."
-            )
-            foundId = self.radarr.lookup_quality_profile_id(
-                settings.radarr_quality_profile_id
-            )
-            if foundId == 0:
-                logger.error(
-                    f"Radarr quality profile provided in settings [{settings.radarr_quality_profile_id}] is invalid!"
+            quality_profiles = []
+            if not isinstance(settings.radarr_quality_profile_id, list):
+                settings.radarr_quality_profile_id = [
+                    settings.radarr_quality_profile_id
+                ]
+            for i in settings.radarr_quality_profile_id:
+                logger.debug(
+                    f"Looking up/validating Radarr quality profile id for [{i}]..."
+                )
+                foundProfile = self.radarr.lookup_quality_profile(i)
+                if not foundProfile:
+                    logger.error(f"Radarr quality profile id/name [{i}] is invalid!")
+                else:
+                    logger.debug(
+                        f"Found Radarr quality profile for [{i}]: [{foundProfile}]"
+                    )
+                    quality_profiles.append(foundProfile)
+            if not len(quality_profiles):
+                logger.warning(
+                    f"No valid Radarr quality profile(s) provided! Using all of the quality profiles I found in Radarr: {self.radarr._quality_profiles}"
                 )
             else:
-                settings.radarr_quality_profile_id = foundId
                 logger.debug(
-                    f"Found Radarr quality profile id: [{settings.radarr_quality_profile_id}]"
+                    f"Using the following Radarr quality profile(s): {[(x['id'], x['name']) for x in quality_profiles]}"
                 )
+                self.radarr._quality_profiles = quality_profiles
+
+            root_folders = []
+            if not hasattr(settings, "radarr_movie_paths"):
+                settings.radarr_movie_paths = []
+                logger.warning(
+                    'No radarr_movie_paths setting detected. Please set one in settings.py (radarr_movie_paths=["/path/1", "/path/2"]). Proceeding with all root folders configured in Radarr.'
+                )
+            if not isinstance(settings.radarr_movie_paths, list):
+                settings.radarr_movie_paths = [settings.radarr_movie_paths]
+            for i in settings.radarr_movie_paths:
+                logger.debug(f"Looking up/validating Radarr root folder for [{i}]...")
+                foundPath = self.radarr.lookup_root_folder(i)
+                if not foundPath:
+                    logger.error(f"Radarr root folder path/id [{i}] is invalid!")
+                else:
+                    logger.debug(f"Found Radarr root folder for [{i}]: [{foundPath}]")
+                    root_folders.append(foundPath)
+            if not len(root_folders):
+                logger.warning(
+                    f"No valid Radarr root folder(s) provided! Using all of the root folders I found in Radarr: {self.radarr._root_folders}"
+                )
+            else:
+                logger.debug(
+                    f"Using the following Radarr root folder(s): {[(x['id'], x['path']) for x in root_folders]}"
+                )
+                self.radarr._root_folders = root_folders
+            if not hasattr(settings, "radarr_tag_with_username"):
+                settings.radarr_tag_with_username = True
+                logger.warning(
+                    "No radarr_tag_with_username setting found. Please add radarr_tag_with_username to settings.py (radarr_tag_with_username=True or radarr_tag_with_username=False). Defaulting to True."
+                )
+            if not hasattr(settings, "radarr_min_availability"):
+                settings.radarr_min_availability = "released"
+                logger.warning(
+                    'No radarr_min_availability setting found. Please add radarr_min_availability to settings.py (options: "released", "announced", "inCinema"). Defaulting to "released".'
+                )
+            if not hasattr(settings, "radarr_movie_command_aliases"):
+                settings.radarr_movie_command_aliases = ["movie"]
+                logger.warning(
+                    'No radarr_movie_command_aliases setting found. Please add radarr_movie_command_aliases to settings.py (e.g. radarr_movie_command_aliases=["movie", "mv"]. Defaulting to ["movie"].'
+                )
+            if not hasattr(settings, "radarr_forced_tags"):
+                settings.radarr_forced_tags = []
+                logger.warning(
+                    'No radarr_forced_tags setting found. Please add radarr_forced_tags to settings.py (e.g. radarr_forced_tags=["tag-1", "tag-2"]) if you want specific tags added to each movie. Defaulting to empty list ([]).'
+                )
+            if not hasattr(settings, "radarr_allow_user_to_select_tags"):
+                settings.radarr_allow_user_to_select_tags = True
+                logger.warning(
+                    "No radarr_allow_user_to_select_tags setting found. Please add radarr_allow_user_to_select_tags to settings.py (e.g. radarr_allow_user_to_select_tags=False) if you do not want users to be able to select tags when adding a movie. Defaulting to True."
+                )
+            if not hasattr(settings, "radarr_user_selectable_tags"):
+                settings.radarr_user_selectable_tags = []
+                logger.warning(
+                    'No radarr_user_selectable_tags setting found. Please add radarr_user_selectable_tags to settings.py (e.g. radarr_user_selectable_tags=["tag-1", "tag-2"]) if you want to limit the tags a user can select. Defaulting to empty list ([]), which will present the user with all tags.'
+                )
+            for t in settings.radarr_user_selectable_tags:
+                if t_id := self.radarr.get_tag_id(t):
+                    logger.debug(
+                        f"Tag id [{t_id}] for user-selectable Radarr tag [{t}]"
+                    )
+            for t in settings.radarr_forced_tags:
+                if t_id := self.radarr.get_tag_id(t):
+                    logger.debug(f"Tag id [{t_id}] for forced Radarr tag [{t}]")
+
         self.conversations = {}
-        try:
-            settings.searcharr_admin_password
-        except AttributeError:
+        if not hasattr(settings, "searcharr_admin_password"):
             settings.searcharr_admin_password = uuid.uuid4().hex
             logger.warning(
                 f'No admin password detected. Please set one in settings.py (searcharr_admin_password="your admin password"). Using {settings.searcharr_admin_password} as the admin password for this session.'
@@ -113,20 +263,6 @@ class Searcharr(object):
         if settings.searcharr_password == "":
             logger.warning(
                 'Password is blank. This will allow anyone to add series/movies using your bot. If this is unexpected, set a password in settings.py (searcharr_password="your password").'
-            )
-        try:  # Handle missing sonarr_tag_with_username setting - added v1.4
-            settings.sonarr_tag_with_username
-        except AttributeError:
-            settings.sonarr_tag_with_username = True
-            logger.warning(
-                "No sonarr_tag_with_username setting found. Please add sonarr_tag_with_username to settings.py (sonarr_tag_with_username=True or sonarr_tag_with_username=False). Defaulting to True."
-            )
-        try:  # Handle missing radarr_tag_with_username setting - added v1.4
-            settings.radarr_tag_with_username
-        except AttributeError:
-            settings.radarr_tag_with_username = True
-            logger.warning(
-                "No radarr_tag_with_username setting found. Please add radarr_tag_with_username to settings.py (radarr_tag_with_username=True or radarr_tag_with_username=False). Defaulting to True."
             )
 
     def cmd_start(self, update, context):
@@ -169,7 +305,7 @@ class Searcharr(object):
         title = self._strip_entities(update.message)
         if not len(title):
             update.message.reply_text(
-                "Please include the movie title in the command, e.g. `/movie Title Here`"
+                f'Please include the movie title in the command, e.g. {" OR ".join([f"`/{c} Title Here`" for c in settings.radarr_movie_command_aliases])}'
             )
             return
         results = self.radarr.lookup_movie(title)
@@ -223,7 +359,7 @@ class Searcharr(object):
         title = self._strip_entities(update.message)
         if not len(title):
             update.message.reply_text(
-                "Please include the series title in the command, e.g. `/series Title Here`"
+                f'Please include the series title in the command, e.g. {" OR ".join([f"`/{c} Title Here`" for c in settings.sonarr_series_command_aliases])}'
             )
             return
         results = self.sonarr.lookup_series(title)
@@ -293,7 +429,11 @@ class Searcharr(object):
             )
         else:
             reply_message, reply_markup = self._prepare_response_users(
-                cid, results, 0, 5, len(results),
+                cid,
+                results,
+                0,
+                5,
+                len(results),
             )
             context.bot.sendMessage(
                 chat_id=update.message.chat.id,
@@ -330,6 +470,14 @@ class Searcharr(object):
             return
 
         cid, i, op = query.data.split("^^^")
+        if "^^" in op:
+            op, op_flags = op.split("^^")
+            op_flags = dict(parse_qsl(op_flags))
+            for k, v in op_flags.items():
+                logger.debug(
+                    f"Adding/Updating additional data for cid=[{cid}], key=[{k}], value=[{v}]..."
+                )
+                self._update_add_data(cid, k, v)
         i = int(i)
         if op == "noop":
             pass
@@ -379,7 +527,11 @@ class Searcharr(object):
                 if i <= 0:
                     i = 0
                 reply_message, reply_markup = self._prepare_response_users(
-                    cid, convo["results"], i, 5, len(convo["results"]),
+                    cid,
+                    convo["results"],
+                    i,
+                    5,
+                    len(convo["results"]),
                 )
                 context.bot.edit_message_text(
                     chat_id=query.message.chat.id,
@@ -426,7 +578,11 @@ class Searcharr(object):
                     query.answer()
                     return
                 reply_message, reply_markup = self._prepare_response_users(
-                    cid, convo["results"], i, 5, len(convo["results"]),
+                    cid,
+                    convo["results"],
+                    i,
+                    5,
+                    len(convo["results"]),
                 )
                 context.bot.edit_message_text(
                     chat_id=query.message.chat.id,
@@ -435,15 +591,157 @@ class Searcharr(object):
                     reply_markup=reply_markup,
                 )
         elif op == "add":
+            r = convo["results"][i]
+            additional_data = self._get_add_data(cid)
+            logger.debug(f"{additional_data=}")
             paths = (
-                self.sonarr.get_root_folders()
+                self.sonarr._root_folders
                 if convo["type"] == "series"
-                else self.radarr.get_root_folders()
+                else self.radarr._root_folders
                 if convo["type"] == "movie"
                 else []
             )
-            r = convo["results"][i]
-            if len(paths) > 1:
+            if not additional_data.get("p"):
+                if len(paths) > 1:
+                    reply_message, reply_markup = self._prepare_response(
+                        convo["type"],
+                        r,
+                        cid,
+                        i,
+                        len(convo["results"]),
+                        add=True,
+                        paths=paths,
+                    )
+                    try:
+                        query.message.edit_media(
+                            media=InputMediaPhoto(r["remotePoster"]),
+                            reply_markup=reply_markup,
+                        )
+                    except BadRequest as e:
+                        if str(e) == "Wrong type of the web page content":
+                            logger.error(
+                                f"Error sending photo [{r['remotePoster']}]: BadRequest: {e}. Attempting to send with default poster..."
+                            )
+                            query.message.edit_media(
+                                media=InputMediaPhoto(
+                                    "https://artworks.thetvdb.com/banners/images/missing/movie.jpg"
+                                ),
+                                reply_markup=reply_markup,
+                            )
+                        else:
+                            raise
+                    query.bot.edit_message_caption(
+                        chat_id=query.message.chat_id,
+                        message_id=query.message.message_id,
+                        caption=reply_message,
+                        reply_markup=reply_markup,
+                    )
+                    query.answer()
+                    return
+                elif len(paths) == 1:
+                    logger.debug(
+                        f"Only one root folder enabled. Adding/Updating additional data for cid=[{cid}], key=[p], value=[{paths[0]['id']}]..."
+                    )
+                    self._update_add_data(cid, "p", paths[0]["path"])
+                else:
+                    self._delete_conversation(cid)
+                    query.message.reply_text(
+                        f"Error adding {convo['type']}: no root folders enabled for {'Sonarr' if convo['type'] == 'series' else 'Radarr'}! Please check your Searcharr configuration and try again."
+                    )
+                    query.message.delete()
+                    query.answer()
+                    return
+            else:
+                try:
+                    int(additional_data.get("p"))
+                except ValueError:
+                    # Value is already the full path
+                    pass
+                else:
+                    # Translate id to actual path
+                    path = next(
+                        (
+                            p["path"]
+                            for p in paths
+                            if p["id"] == int(additional_data["p"])
+                        ),
+                        None,
+                    )
+                    logger.debug(
+                        f"Path id [{additional_data['p']}] lookup result: [{path}]"
+                    )
+                    if path:
+                        self._update_add_data(cid, "p", path)
+
+            if not additional_data.get("q"):
+                quality_profiles = (
+                    self.sonarr._quality_profiles
+                    if convo["type"] == "series"
+                    else self.radarr._quality_profiles
+                )
+                if len(quality_profiles) > 1:
+                    # prepare response to prompt user to select quality profile, and return
+                    reply_message, reply_markup = self._prepare_response(
+                        convo["type"],
+                        r,
+                        cid,
+                        i,
+                        len(convo["results"]),
+                        add=True,
+                        quality_profiles=quality_profiles,
+                    )
+                    try:
+                        query.message.edit_media(
+                            media=InputMediaPhoto(r["remotePoster"]),
+                            reply_markup=reply_markup,
+                        )
+                    except BadRequest as e:
+                        if str(e) == "Wrong type of the web page content":
+                            logger.error(
+                                f"Error sending photo [{r['remotePoster']}]: BadRequest: {e}. Attempting to send with default poster..."
+                            )
+                            query.message.edit_media(
+                                media=InputMediaPhoto(
+                                    "https://artworks.thetvdb.com/banners/images/missing/movie.jpg"
+                                ),
+                                reply_markup=reply_markup,
+                            )
+                        else:
+                            raise
+                    query.bot.edit_message_caption(
+                        chat_id=query.message.chat_id,
+                        message_id=query.message.message_id,
+                        caption=reply_message,
+                        reply_markup=reply_markup,
+                    )
+                    query.answer()
+                    return
+                elif len(quality_profiles) == 1:
+                    logger.debug(
+                        f"Only one quality profile enabled. Adding/Updating additional data for cid=[{cid}], key=[q], value=[{quality_profiles[0]['id']}]..."
+                    )
+                    self._update_add_data(cid, "q", quality_profiles[0]["id"])
+                else:
+                    self._delete_conversation(cid)
+                    query.message.reply_text(
+                        f"Error adding {convo['type']}: no quality profiles enabled for {'Sonarr' if convo['type'] == 'series' else 'Radarr'}! Please check your Searcharr configuration and try again."
+                    )
+                    query.message.delete()
+                    query.answer()
+                    return
+
+            if (
+                convo["type"] == "series"
+                and settings.sonarr_season_monitor_prompt
+                and additional_data.get("m", False) is False
+            ):
+                # m = monitor season(s)
+                monitor_options = [
+                    "All Seasons",
+                    "First Season Only",
+                    "Latest Season Only",
+                ]
+                # prepare response to prompt user to select quality profile, and return
                 reply_message, reply_markup = self._prepare_response(
                     convo["type"],
                     r,
@@ -451,7 +749,7 @@ class Searcharr(object):
                     i,
                     len(convo["results"]),
                     add=True,
-                    paths=paths,
+                    monitor_options=monitor_options,
                 )
                 try:
                     query.message.edit_media(
@@ -477,92 +775,118 @@ class Searcharr(object):
                     caption=reply_message,
                     reply_markup=reply_markup,
                 )
-            elif len(paths) == 1:
-                try:
-                    if convo["type"] == "series":
-                        added = self.sonarr.add_series(
-                            series_info=r,
-                            path=paths[0]["path"],
-                            quality=settings.sonarr_quality_profile_id,
-                            monitored=settings.sonarr_add_monitored,
-                            search=settings.sonarr_search_on_add,
-                            tag=f"searcharr-{query.from_user.username if query.from_user.username else query.from_user.id}"
-                            if settings.sonarr_tag_with_username
-                            else None,
-                        )
-                    elif convo["type"] == "movie":
-                        added = self.radarr.add_movie(
-                            movie_info=r,
-                            path=paths[0]["path"],
-                            quality=settings.radarr_quality_profile_id,
-                            monitored=settings.radarr_add_monitored,
-                            search=settings.radarr_search_on_add,
-                            tag=f"searcharr-{query.from_user.username if query.from_user.username else query.from_user.id}"
-                            if settings.radarr_tag_with_username
-                            else None,
-                        )
-                    else:
-                        added = False
-                except Exception as e:
-                    logger.error(f"Error adding {convo['type']}: {e}")
-                    added = False
-                if added:
-                    self._delete_conversation(cid)
-                    query.message.reply_text(f"Successfully added {r['title']}!")
-                    query.message.delete()
-                else:
-                    query.message.reply_text(
-                        f"Unspecified error encountered while adding {convo['type']}!"
-                    )
-            else:
-                self._delete_conversation(cid)
-                query.message.reply_text(
-                    f"Error adding {convo['type']}: no root folders found in {'Sonarr' if convo['type'] == 'series' else 'Radarr'}! Please check your configuration in {'Sonarr' if convo['type'] == 'series' else 'Radarr'} and try again."
+                query.answer()
+                return
+
+            if convo["type"] == "series":
+                all_tags = self.sonarr.get_filtered_tags(
+                    settings.sonarr_user_selectable_tags
                 )
-                query.message.delete()
-        elif op.startswith("addto:"):
-            r = convo["results"][i]
-            paths = (
-                self.sonarr.get_root_folders()
-                if convo["type"] == "series"
-                else self.radarr.get_root_folders()
-                if convo["type"] == "movie"
+                allow_user_to_select_tags = settings.sonarr_allow_user_to_select_tags
+                forced_tags = settings.sonarr_forced_tags
+            elif convo["type"] == "movie":
+                all_tags = self.radarr.get_filtered_tags(
+                    settings.radarr_user_selectable_tags
+                )
+                allow_user_to_select_tags = settings.radarr_allow_user_to_select_tags
+                forced_tags = settings.radarr_forced_tags
+            if allow_user_to_select_tags and not additional_data.get("td"):
+                if not len(all_tags):
+                    logger.warning(
+                        f"User tagging is enabled, but no tags found. Make sure there are tags in {'Sonarr' if convo['type'] == 'series' else 'Radarr'} matching your Searcharr configuration."
+                    )
+                elif not additional_data.get("tt"):
+                    reply_message, reply_markup = self._prepare_response(
+                        convo["type"],
+                        r,
+                        cid,
+                        i,
+                        len(convo["results"]),
+                        add=True,
+                        tags=all_tags,
+                    )
+                    try:
+                        query.message.edit_media(
+                            media=InputMediaPhoto(r["remotePoster"]),
+                            reply_markup=reply_markup,
+                        )
+                    except BadRequest as e:
+                        if str(e) == "Wrong type of the web page content":
+                            logger.error(
+                                f"Error sending photo [{r['remotePoster']}]: BadRequest: {e}. Attempting to send with default poster..."
+                            )
+                            query.message.edit_media(
+                                media=InputMediaPhoto(
+                                    "https://artworks.thetvdb.com/banners/images/missing/movie.jpg"
+                                ),
+                                reply_markup=reply_markup,
+                            )
+                        else:
+                            raise
+                    query.bot.edit_message_caption(
+                        chat_id=query.message.chat_id,
+                        message_id=query.message.message_id,
+                        caption=reply_message,
+                        reply_markup=reply_markup,
+                    )
+                    query.answer()
+                    return
+                else:
+                    tag_ids = (
+                        additional_data.get("t", "").split(",")
+                        if len(additional_data.get("t", ""))
+                        else []
+                    )
+                    tag_ids.append(additional_data["tt"])
+                    logger.debug(f"Adding tag [{additional_data['tt']}]")
+                    self._update_add_data(cid, "t", ",".join(tag_ids))
+                    return
+
+            tags = (
+                additional_data.get("t").split(",")
+                if len(additional_data.get("t", ""))
                 else []
             )
-            pathId = op.split(":")[1]
-            try:
-                int(pathId)  # Check if pathId is an int - was full path in v1.3.2
-            except ValueError:
-                path = pathId
-                logger.debug(
-                    f"Detected non-integer path id: [{path}], using that as the full path..."
-                )
-            else:
-                path = next((p["path"] for p in paths if p["id"] == int(pathId)), None)
-                logger.debug(f"Path id [{pathId}] lookup result: [{path}]")
+            logger.debug(f"{tags=}")
+            if convo["type"] == "series":
+                get_tag_id = self.sonarr.get_tag_id
+                tag_with_username = settings.sonarr_tag_with_username
+            elif convo["type"] == "movie":
+                get_tag_id = self.radarr.get_tag_id
+                tag_with_username = settings.radarr_tag_with_username
+            if tag_with_username:
+                tag = f"searcharr-{query.from_user.username if query.from_user.username else query.from_user.id}"
+                if tag_id := get_tag_id(tag):
+                    tags.append(str(tag_id))
+                else:
+                    self.logger.warning(
+                        f"Tag lookup/creation failed for [{tag}]. This tag will not be added to the {convo['type']}."
+                    )
+            for tag in forced_tags:
+                if tag_id := get_tag_id(tag):
+                    tags.append(str(tag_id))
+                else:
+                    self.logger.warning(
+                        f"Tag lookup/creation failed for forced tag [{tag}]. This tag will not be added to the {convo['type']}."
+                    )
+            self._update_add_data(cid, "t", ",".join(list(set(tags))))
 
+            logger.debug("All data is accounted for, proceeding to add...")
             try:
                 if convo["type"] == "series":
                     added = self.sonarr.add_series(
                         series_info=r,
-                        path=path,
-                        quality=settings.sonarr_quality_profile_id,
                         monitored=settings.sonarr_add_monitored,
                         search=settings.sonarr_search_on_add,
-                        tag=f"searcharr-{query.from_user.username if query.from_user.username else query.from_user.id}"
-                        if settings.sonarr_tag_with_username
-                        else None,
+                        additional_data=self._get_add_data(cid),
                     )
                 elif convo["type"] == "movie":
                     added = self.radarr.add_movie(
                         movie_info=r,
-                        path=path,
-                        quality=settings.radarr_quality_profile_id,
                         monitored=settings.radarr_add_monitored,
                         search=settings.radarr_search_on_add,
-                        tag=f"searcharr-{query.from_user.username if query.from_user.username else query.from_user.id}"
-                        if settings.radarr_tag_with_username
-                        else None,
+                        min_avail=settings.radarr_min_availability,
+                        additional_data=self._get_add_data(cid),
                     )
                 else:
                     added = False
@@ -601,7 +925,11 @@ class Searcharr(object):
                     results=convo["results"],
                 )
                 reply_message, reply_markup = self._prepare_response_users(
-                    cid, convo["results"], 0, 5, len(convo["results"]),
+                    cid,
+                    convo["results"],
+                    0,
+                    5,
+                    len(convo["results"]),
                 )
                 context.bot.edit_message_text(
                     chat_id=query.message.chat.id,
@@ -636,7 +964,11 @@ class Searcharr(object):
                     results=convo["results"],
                 )
                 reply_message, reply_markup = self._prepare_response_users(
-                    cid, convo["results"], 0, 5, len(convo["results"]),
+                    cid,
+                    convo["results"],
+                    0,
+                    5,
+                    len(convo["results"]),
                 )
                 context.bot.edit_message_text(
                     chat_id=query.message.chat.id,
@@ -670,7 +1002,11 @@ class Searcharr(object):
                     results=convo["results"],
                 )
                 reply_message, reply_markup = self._prepare_response_users(
-                    cid, convo["results"], 0, 5, len(convo["results"]),
+                    cid,
+                    convo["results"],
+                    0,
+                    5,
+                    len(convo["results"]),
                 )
                 context.bot.edit_message_text(
                     chat_id=query.message.chat.id,
@@ -686,7 +1022,19 @@ class Searcharr(object):
 
         query.answer()
 
-    def _prepare_response(self, kind, r, cid, i, total_results, add=False, paths=None):
+    def _prepare_response(
+        self,
+        kind,
+        r,
+        cid,
+        i,
+        total_results,
+        add=False,
+        paths=None,
+        quality_profiles=None,
+        monitor_options=None,
+        tags=None,
+    ):
         keyboard = []
         keyboardNavRow = []
         if i > 0:
@@ -718,19 +1066,54 @@ class Searcharr(object):
         keyboard.append(keyboardNavRow)
 
         if add:
-            if not paths and kind == "series":
-                paths = self.sonarr.get_root_folders()
-            elif not paths and kind == "movie":
-                paths = self.radarr.get_root_folders()
-            for p in paths:
+            if tags:
+                for tag in tags[:12]:
+                    keyboard.append(
+                        [
+                            InlineKeyboardButton(
+                                f"Add Tag: {tag['label']}",
+                                callback_data=f"{cid}^^^{i}^^^add^^tt={tag['id']}",
+                            )
+                        ],
+                    )
                 keyboard.append(
                     [
                         InlineKeyboardButton(
-                            f"Add to {p['path']}",
-                            callback_data=f"{cid}^^^{i}^^^addto:{p['id']}",
+                            "Finished Tagging",
+                            callback_data=f"{cid}^^^{i}^^^add^^td=1",
                         )
                     ],
                 )
+            elif monitor_options:
+                for k, o in enumerate(monitor_options):
+                    keyboard.append(
+                        [
+                            InlineKeyboardButton(
+                                f"Monitor {o}",
+                                callback_data=f"{cid}^^^{i}^^^add^^m={k}",
+                            )
+                        ],
+                    )
+            elif quality_profiles:
+                for q in quality_profiles:
+                    keyboard.append(
+                        [
+                            InlineKeyboardButton(
+                                f"Add Quality: {q['name']}",
+                                callback_data=f"{cid}^^^{i}^^^add^^q={q['id']}",
+                            )
+                        ],
+                    )
+            elif paths:
+                for p in paths:
+                    keyboard.append(
+                        [
+                            InlineKeyboardButton(
+                                f"Add to {p['path']}",
+                                callback_data=f"{cid}^^^{i}^^^add^^p={p['id']}",
+                            )
+                        ],
+                    )
 
         keyboardActRow = []
         if not add:
@@ -753,6 +1136,15 @@ class Searcharr(object):
         )
         if len(keyboardActRow):
             keyboard.append(keyboardActRow)
+        if not add and kind == "series" and "Anime" in r["genres"]:
+            keyboard.append(
+                [
+                    InlineKeyboardButton(
+                        "Add Series as Anime Type!",
+                        callback_data=f"{cid}^^^{i}^^^add^^st=a",
+                    )
+                ]
+            )
 
         reply_markup = InlineKeyboardMarkup(keyboard)
 
@@ -825,11 +1217,11 @@ class Searcharr(object):
             )
             return
         if settings.sonarr_enabled and settings.radarr_enabled:
-            resp = "Use /movie <title> to add a movie to Radarr, and /series <title> to add a series to Sonarr."
+            resp = f'Use {" OR ".join([f"/{c} <title>" for c in settings.radarr_movie_command_aliases])} to add a movie to Radarr, and {" OR ".join([f"/{c} <title>" for c in settings.sonarr_series_command_aliases])} to add a series to Sonarr.'
         elif settings.sonarr_enabled:
-            resp = "Use /series <title> to add a series to Sonarr."
+            resp = f'Use {" OR ".join([f"/{c} <title>" for c in settings.sonarr_series_command_aliases])} to add a series to Sonarr.'
         elif settings.radarr_enabled:
-            resp = "Use /movie <title> to add a movie to Radarr."
+            resp = f'Use {" OR ".join([f"/{c} <title>" for c in settings.radarr_movie_command_aliases])} to add a movie to Radarr.'
         else:
             resp = "Sorry, but all of my features are currently disabled."
 
@@ -854,8 +1246,12 @@ class Searcharr(object):
 
         updater.dispatcher.add_handler(CommandHandler("help", self.cmd_help))
         updater.dispatcher.add_handler(CommandHandler("start", self.cmd_start))
-        updater.dispatcher.add_handler(CommandHandler("movie", self.cmd_movie))
-        updater.dispatcher.add_handler(CommandHandler("series", self.cmd_series))
+        for c in settings.radarr_movie_command_aliases:
+            logger.debug(f"Registering [/{c}] as a movie command")
+            updater.dispatcher.add_handler(CommandHandler(c, self.cmd_movie))
+        for c in settings.sonarr_series_command_aliases:
+            logger.debug(f"Registering [/{c}] as a series command")
+            updater.dispatcher.add_handler(CommandHandler(c, self.cmd_series))
         updater.dispatcher.add_handler(CommandHandler("users", self.cmd_users))
         updater.dispatcher.add_handler(CallbackQueryHandler(self.callback))
         if not self.DEV_MODE:
@@ -880,7 +1276,9 @@ class Searcharr(object):
                 con.close()
                 return True
         except sqlite3.Error as e:
-            logger.error(f"Error executing database query [{q}]: {e}")
+            logger.error(
+                f"Error executing database query to create conversation [{q}]: {e}"
+            )
             raise
 
     def _generate_cid(self):
@@ -929,6 +1327,7 @@ class Searcharr(object):
         return None
 
     def _delete_conversation(self, id):
+        self._clear_add_data(id)
         q = "DELETE FROM conversations WHERE id=?;"
         qa = (id,)
         logger.debug(f"Executing query: [{q}] with args: [{qa}]")
@@ -941,7 +1340,60 @@ class Searcharr(object):
                 return True
         except sqlite3.Error as e:
             logger.error(
-                f"Error executing database query to look up conversation from the database [{q}]: {e}"
+                f"Error executing database query to delete conversation from the database [{q}]: {e}"
+            )
+            return False
+
+    def _get_add_data(self, cid):
+        q = "SELECT * FROM add_data WHERE cid=?;"
+        qa = (cid,)
+        logger.debug(f"Executing query: [{q}] with args: [{qa}]...")
+        try:
+            con, cur = self._get_con_cur()
+            r = cur.execute(q, qa)
+        except sqlite3.Error as e:
+            r = None
+            logger.error(
+                f"Error executing database query to look up conversation add data from the database [{q}]: {e}"
+            )
+
+        if r:
+            records = r.fetchall()
+            con.close()
+            logger.debug(f"Query response: {records}")
+            return {x["key"]: x["value"] for x in records}
+        else:
+            return {}
+
+    def _update_add_data(self, cid, key, value):
+        con, cur = self._get_con_cur()
+        q = "INSERT OR REPLACE INTO add_data (cid, key, value) VALUES (?, ?, ?)"
+        qa = (cid, key, value)
+        logger.debug(f"Executing query: [{q}] with args: [{qa}]")
+        try:
+            with DBLOCK:
+                cur.execute(q, qa)
+                con.commit()
+                con.close()
+                return True
+        except sqlite3.Error as e:
+            logger.error(f"Error executing database query [{q}]: {e}")
+            raise
+
+    def _clear_add_data(self, cid):
+        q = "DELETE FROM add_data WHERE cid=?;"
+        qa = (cid,)
+        logger.debug(f"Executing query: [{q}] with args: [{qa}]")
+        try:
+            con, cur = self._get_con_cur()
+            with DBLOCK:
+                cur.execute(q, qa)
+                con.commit()
+                con.close()
+                return True
+        except sqlite3.Error as e:
+            logger.error(
+                f"Error executing database query to delete conversation add data from the database [{q}]: {e}"
             )
             return False
 
@@ -1076,33 +1528,34 @@ class Searcharr(object):
 
     def _init_db(self):
         con, cur = self._get_con_cur()
-        q = """CREATE TABLE IF NOT EXISTS conversations (
-            id text primary key,
-            username text not null,
-            type text,
-            results text
-        );"""
-        logger.debug(f"Executing query: [{q}] with no args...")
-        try:
-            with DBLOCK:
-                cur.execute(q)
-        except sqlite3.Error as e:
-            logger.error(f"Error executing database query [{q}]: {e}")
-            raise
-
-        q = """CREATE TABLE IF NOT EXISTS users (
-            id integer primary key,
-            username text not null,
-            admin text,
-            permissions text
-        );"""
-        logger.debug(f"Executing query: [{q}] with no args...")
-        try:
-            with DBLOCK:
-                cur.execute(q)
-        except sqlite3.Error as e:
-            logger.error(f"Error executing database query [{q}]: {e}")
-            raise
+        queries = [
+            """CREATE TABLE IF NOT EXISTS conversations (
+                id text primary key,
+                username text not null,
+                type text,
+                results text
+            );""",
+            """CREATE TABLE IF NOT EXISTS users (
+                id integer primary key,
+                username text not null,
+                admin text,
+                permissions text
+            );""",
+            """CREATE TABLE IF NOT EXISTS add_data (
+                cid text,
+                key text,
+                value text,
+                primary key (cid, key)
+            );""",
+        ]
+        for q in queries:
+            logger.debug(f"Executing query: [{q}] with no args...")
+            try:
+                with DBLOCK:
+                    cur.execute(q)
+            except sqlite3.Error as e:
+                logger.error(f"Error executing database query [{q}]: {e}")
+                raise
 
         con.commit()
         con.close()
