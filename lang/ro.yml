@@ -1,0 +1,59 @@
+language_ietf: ro
+language_label: Romanian
+
+movie: film
+series: serial
+season: sezon
+title: titlu
+title_here: titlu aici
+password: parola
+admin_password: parola administrator
+admin_auth_success: Autentificare admin reusita. Utilizati {commands} pentru comenzi.
+already_authenticated: Esti deja autentificat. Incercati {commands} pentru informatii despre utilizare.
+auth_successful: Autentificare reușită. Utilizați {commands} pentru comenzi.
+incorrect_pw: Parola incorecta.
+auth_required: Se pare că nu sunteti autentificat... Va rugam sa va autentificati cu {commands} si apoi incercati din nou.
+admin_auth_required: Nu aveți permisiuni de administrator... Vă rugăm să vă autentificați cu {commands} și apoi încercați din nou.
+radarr_disabled: Scuze, dar suportul pentru filme este dezactivat.
+include_movie_title_in_cmd: Vă rugăm să includeți titlul filmului în comandă, e.g. {commands}
+no_matching_movies: Îmi pare rău, dar nu am găsit niciun film potrivit.
+sonarr_disabled: Ne pare rău, dar suportul pentru seriale este dezactivat.
+include_series_title_in_cmd: Vă rugăm să includeți titlul serialului în comandă, e.g. {commands}
+no_matching_series: Îmi pare rău, dar nu am găsit nici un serial cu numele acesta.
+no_users_found: Îmi pare rău, dar nu am găsit nici un utilizator. Pare greșit...
+convo_not_found: Am primit comanda ta, dar nu recunosc conversația. Vă rugăm să începeți din nou.
+search_canceled: Căutare anulată!
+no_root_folders: "Eroare la adăugare {kind}: nu sunt activate foldere rădăcină {app}! Verificați configurația Searcharr și încercați din nou."
+no_quality_profiles: "Eroare la adăugare {kind}: nu sunt activate profiluri de calitate pentru {app}! Verificați configurația Searcharr și încercați din nou."
+all_seasons: Toate sezoanele
+first_season: Doar primul sezon
+latest_season: Numai ultimul sezon
+added: Adăugat cu succes {title}!
+unknown_error_adding: A apărut o eroare nespecificată la adăugare {kind}!
+removed_user: S-a eliminat cu succes tot accesul pentru utilizatorul [{user}]!
+unknown_error_removing_user: Eroare nespecificată întâlnită la eliminarea utilizatorului [{user}]!
+added_admin_access: S-a adăugat acces de administrator pentru utilizatorul [{user}]!
+unknown_error_adding_admin: A apărut o eroare nespecificată la adăugarea accesului de administrator pentru utilizatorul [{user}]!
+removed_admin_access: S-a eliminat accesul de administrator pentru utilizatorul [{user}]!
+unknown_error_removing_admin: A apărut o eroare nespecificată la eliminarea accesului de administrator pentru utilizatorul [{user}]!
+prev_button: < Anterior
+next_button: Urmatorul >
+add_tag_button: "Adaugă etichetă: {tag}"
+finished_tagging_button: Etichetarea terminată
+monitor_button: Monitorizați {option}
+add_quality_button: "Adăugați calitate: {quality}"
+add_path_button: Adaugă la {path}
+add_button: Adauga {kind}!
+already_added_button: Deja Adaugat!
+cancel_search_button: Cautare anulata
+add_series_anime_button: Adăugați serialul ca desene animate!
+unexpected_error: Ceva n-a mers bine!
+remove_user_button: Elimina
+make_admin_button: Adaugati administrator
+remove_admin_button: Eliminați Admin
+done: Done
+listing_users_pagination: Listarea utilizatorilor Searcharr {page_info}.
+help_sonarr: Foloseste {series_commands} pentru a adăuga un serial la Sonarr.
+help_radarr: Foloseste {movie_commands} pentru a adăuga un film la Radarr.
+no_features: Ne pare rău, dar toate funcțiile mele sunt dezactivate.
+admin_help: Deoarece sunteți administrator, puteți utiliza și {commands} pentru a gestiona utilizatorii.

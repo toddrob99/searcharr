@@ -8,6 +8,10 @@ https://github.com/toddrob99/searcharr
 # Searcharr Bot
 searcharr_password = ""  # Used to authenticate as a regular user to add series/movies
 searcharr_admin_password = ""  # Used to authenticate as admin to manage users
+searcharr_language = "en-us"  # yml file in the lang folder
+searcharr_start_command_aliases = ["start"]  # Override /start command
+searcharr_help_command_aliases = ["help"]  # Override /help command
+searcharr_users_command_aliases = ["users"]  # Override /users command
 
 # Telegram
 tgram_token = ""

@@ -7,6 +7,7 @@ https://github.com/toddrob99/searcharr
 import argparse
 import json
 import os
+import yaml
 import sqlite3
 from threading import Lock
 from urllib.parse import parse_qsl
@@ -21,7 +22,7 @@ import radarr
 import sonarr
 import settings
 
-__version__ = "2.0"
+__version__ = "2.1-b1"
 
 DBPATH = os.path.join(os.path.dirname(os.path.realpath(__file__)), "data")
 DBFILE = "searcharr.db"
@@ -61,6 +62,7 @@ class Searcharr(object):
         self.DEV_MODE = True if args.dev_mode else False
         self.token = token
         logger.info(f"Searcharr v{__version__} - Logging started!")
+        self._lang = self._load_language()
         self.sonarr = (
             sonarr.Sonarr(settings.sonarr_url, settings.sonarr_api_key, args.verbose)
             if settings.sonarr_enabled
@@ -264,6 +266,21 @@ class Searcharr(object):
             logger.warning(
                 'Password is blank. This will allow anyone to add series/movies using your bot. If this is unexpected, set a password in settings.py (searcharr_password="your password").'
             )
+        if not hasattr(settings, "searcharr_start_command_aliases"):
+            settings.searcharr_start_command_aliases = ["start"]
+            logger.warning(
+                'No searcharr_start_command_aliases setting found. Please add searcharr_start_command_aliases to settings.py (e.g. searcharr_start_command_aliases=["start"]. Defaulting to ["start"].'
+            )
+        if not hasattr(settings, "searcharr_help_command_aliases"):
+            settings.searcharr_help_command_aliases = ["help"]
+            logger.warning(
+                'No searcharr_help_command_aliases setting found. Please add searcharr_help_command_aliases to settings.py (e.g. searcharr_help_command_aliases=["help"]. Defaulting to ["help"].'
+            )
+        if not hasattr(settings, "searcharr_users_command_aliases"):
+            settings.searcharr_users_command_aliases = ["users"]
+            logger.warning(
+                'No searcharr_users_command_aliases setting found. Please add searcharr_users_command_aliases to settings.py (e.g. searcharr_users_command_aliases=["users"]. Defaulting to ["users"].'
+            )
 
     def cmd_start(self, update, context):
         logger.debug(f"Received start cmd from [{update.message.from_user.username}]")
@@ -275,11 +292,21 @@ class Searcharr(object):
                 admin=1,
             )
             update.message.reply_text(
-                "Admin authentication successful. Use /help for commands."
+                self._xlate(
+                    "admin_auth_success",
+                    commands=" OR ".join(
+                        [f"`/{c}`" for c in settings.searcharr_help_command_aliases]
+                    ),
+                )
             )
         elif self._authenticated(update.message.from_user.id):
             update.message.reply_text(
-                "You are already authenticated. Try /help for usage info."
+                self._xlate(
+                    "already_authenticated",
+                    commands=" OR ".join(
+                        [f"`/{c}`" for c in settings.searcharr_help_command_aliases]
+                    ),
+                )
             )
         elif password == settings.searcharr_password:
             self._add_user(
@@ -287,25 +314,47 @@ class Searcharr(object):
                 username=str(update.message.from_user.username),
             )
             update.message.reply_text(
-                "Authentication successful. Use /help for commands."
+                self._xlate(
+                    "auth_successful",
+                    commands=" OR ".join(
+                        [f"`/{c}`" for c in settings.searcharr_help_command_aliases]
+                    ),
+                )
             )
         else:
-            update.message.reply_text("Incorrect password.")
+            update.message.reply_text(self._xlate("incorrect_pw"))
 
     def cmd_movie(self, update, context):
         logger.debug(f"Received movie cmd from [{update.message.from_user.username}]")
         if not self._authenticated(update.message.from_user.id):
             update.message.reply_text(
-                "I don't seem to know you... Please authenticate with `/start <password>` and then try again."
+                self._xlate(
+                    "auth_required",
+                    commands=" OR ".join(
+                        [
+                            f"`/{c} <{self._xlate('password')}>`"
+                            for c in settings.searcharr_start_command_aliases
+                        ]
+                    ),
+                )
             )
             return
         if not settings.radarr_enabled:
-            update.message.reply_text("Sorry, but movie support is disabled.")
+            update.message.reply_text(self._xlate("radarr_disabled"))
             return
         title = self._strip_entities(update.message)
         if not len(title):
+            x_title = self._xlate("title").title()
             update.message.reply_text(
-                f'Please include the movie title in the command, e.g. {" OR ".join([f"`/{c} Title Here`" for c in settings.radarr_movie_command_aliases])}'
+                self._xlate(
+                    "include_movie_title_in_cmd",
+                    commands=" OR ".join(
+                        [
+                            f"`/{c} {x_title}`"
+                            for c in settings.radarr_movie_command_aliases
+                        ]
+                    ),
+                )
             )
             return
         results = self.radarr.lookup_movie(title)
@@ -319,7 +368,7 @@ class Searcharr(object):
         )
 
         if not len(results):
-            update.message.reply_text("Sorry, but I didn't find any matching movies.")
+            update.message.reply_text(self._xlate("no_matching_movies"))
         else:
             r = results[0]
             reply_message, reply_markup = self._prepare_response(
@@ -350,16 +399,33 @@ class Searcharr(object):
         logger.debug(f"Received series cmd from [{update.message.from_user.username}]")
         if not self._authenticated(update.message.from_user.id):
             update.message.reply_text(
-                "I don't seem to know you... Please authenticate with `/start <password>` and then try again."
+                self._xlate(
+                    "auth_required",
+                    commands=" OR ".join(
+                        [
+                            f"`/{c} <{self._xlate('password')}>`"
+                            for c in settings.searcharr_start_command_aliases
+                        ]
+                    ),
+                )
             )
             return
         if not settings.sonarr_enabled:
-            update.message.reply_text("Sorry, but series support is disabled.")
+            update.message.reply_text(self._xlate("sonarr_disabled"))
             return
         title = self._strip_entities(update.message)
         if not len(title):
+            x_title = self._xlate("title").title()
             update.message.reply_text(
-                f'Please include the series title in the command, e.g. {" OR ".join([f"`/{c} Title Here`" for c in settings.sonarr_series_command_aliases])}'
+                self._xlate(
+                    "include_series_title_in_cmd",
+                    commands=" OR ".join(
+                        [
+                            f"`/{c} {x_title}`"
+                            for c in settings.sonarr_series_command_aliases
+                        ]
+                    ),
+                )
             )
             return
         results = self.sonarr.lookup_series(title)
@@ -373,7 +439,7 @@ class Searcharr(object):
         )
 
         if not len(results):
-            update.message.reply_text("Sorry, but I didn't find any matching series.")
+            update.message.reply_text(self._xlate("no_matching_series"))
         else:
             r = results[0]
             reply_message, reply_markup = self._prepare_response(
@@ -405,12 +471,28 @@ class Searcharr(object):
         auth_level = self._authenticated(update.message.from_user.id)
         if not auth_level:
             update.message.reply_text(
-                "I don't seem to know you... Please authenticate with `/start <password>` and then try again."
+                self._xlate(
+                    "auth_required",
+                    commands=" OR ".join(
+                        [
+                            f"`/{c} <{self._xlate('password')}>`"
+                            for c in settings.searcharr_start_command_aliases
+                        ]
+                    ),
+                )
             )
             return
         elif auth_level != 2:
             update.message.reply_text(
-                "You do not have admin permissions... Please authenticate with `/start <admin password>` and then try again."
+                self._xlate(
+                    "admin_auth_required",
+                    commands=" OR ".join(
+                        [
+                            f"`/{c} <{self._xlate('admin_password')}>`"
+                            for c in settings.searcharr_start_command_aliases
+                        ]
+                    ),
+                )
             )
             return
 
@@ -424,9 +506,7 @@ class Searcharr(object):
             results=results,
         )
         if not len(results):
-            update.message.reply_text(
-                "Sorry, but I didn't find any users. That seems wrong..."
-            )
+            update.message.reply_text(self._xlate("no_users_found"))
         else:
             reply_message, reply_markup = self._prepare_response_users(
                 cid,
@@ -449,7 +529,15 @@ class Searcharr(object):
         auth_level = self._authenticated(query.from_user.id)
         if not auth_level:
             query.message.reply_text(
-                "I don't seem to know you... Please authenticate with `/start <password>` and then try again."
+                self._xlate(
+                    "auth_required",
+                    commands=" OR ".join(
+                        [
+                            f"`/{c} <{self._xlate('password')}>`"
+                            for c in settings.searcharr_start_command_aliases
+                        ]
+                    ),
+                )
             )
             query.message.delete()
             query.answer()
@@ -462,9 +550,7 @@ class Searcharr(object):
         convo = self._get_conversation(query.data.split("^^^")[0])
         # convo = self.conversations.get(query.data.split("^^^")[0])
         if not convo:
-            query.message.reply_text(
-                "I received your command, but I don't recognize the conversation. Please start again."
-            )
+            query.message.reply_text(self._xlate("convo_not_found"))
             query.message.delete()
             query.answer()
             return
@@ -484,7 +570,7 @@ class Searcharr(object):
         elif op == "cancel":
             self._delete_conversation(cid)
             # self.conversations.pop(cid)
-            query.message.reply_text("Search canceled!")
+            query.message.reply_text(self._xlate("search_canceled"))
             query.message.delete()
         elif op == "done":
             self._delete_conversation(cid)
@@ -646,7 +732,11 @@ class Searcharr(object):
                 else:
                     self._delete_conversation(cid)
                     query.message.reply_text(
-                        f"Error adding {convo['type']}: no root folders enabled for {'Sonarr' if convo['type'] == 'series' else 'Radarr'}! Please check your Searcharr configuration and try again."
+                        self._xlate(
+                            "no_root_folders",
+                            kind=self._xlate(convo["type"]),
+                            app="Sonarr" if convo["type"] == "series" else "Radarr",
+                        )
                     )
                     query.message.delete()
                     query.answer()
@@ -724,7 +814,11 @@ class Searcharr(object):
                 else:
                     self._delete_conversation(cid)
                     query.message.reply_text(
-                        f"Error adding {convo['type']}: no quality profiles enabled for {'Sonarr' if convo['type'] == 'series' else 'Radarr'}! Please check your Searcharr configuration and try again."
+                        self._xlate(
+                            "no_quality_profiles",
+                            kind=self._xlate(convo["type"]),
+                            app="Sonarr" if convo["type"] == "series" else "Radarr",
+                        )
                     )
                     query.message.delete()
                     query.answer()
@@ -737,9 +831,9 @@ class Searcharr(object):
             ):
                 # m = monitor season(s)
                 monitor_options = [
-                    "All Seasons",
-                    "First Season Only",
-                    "Latest Season Only",
+                    self._xlate("all_seasons"),
+                    self._xlate("first_season"),
+                    self._xlate("latest_season"),
                 ]
                 # prepare response to prompt user to select quality profile, and return
                 reply_message, reply_markup = self._prepare_response(
@@ -896,16 +990,24 @@ class Searcharr(object):
             logger.debug(f"Result of attempt to add {convo['type']}: {added}")
             if added:
                 self._delete_conversation(cid)
-                query.message.reply_text(f"Successfully added {r['title']}!")
+                query.message.reply_text(self._xlate("added", title=r["title"]))
                 query.message.delete()
             else:
                 query.message.reply_text(
-                    f"Unspecified error encountered while adding {convo['type']}!"
+                    self._xlate("unknown_error_adding", kind=convo["type"])
                 )
         elif op == "remove_user":
             if auth_level != 2:
                 query.message.reply_text(
-                    "You do not have admin permissions... Please authenticate with `/start <admin password>` and then try again."
+                    self._xlate(
+                        "admin_auth_required",
+                        commands=" OR ".join(
+                            [
+                                f"`/{c} <{self._xlate('admin_password')}>`"
+                                for c in settings.searcharr_start_command_aliases
+                            ]
+                        ),
+                    )
                 )
                 query.message.delete()
                 query.answer()
@@ -934,19 +1036,26 @@ class Searcharr(object):
                 context.bot.edit_message_text(
                     chat_id=query.message.chat.id,
                     message_id=query.message.message_id,
-                    text=f"Successfully removed all access for user id [{i}]! "
-                    + reply_message,
+                    text=f"{self._xlate('removed_user', user=i)} {reply_message}",
                     reply_markup=reply_markup,
                 )
             except Exception as e:
                 logger.error(f"Error removing all access for user id [{i}]: {e}")
                 query.message.reply_text(
-                    f"Unspecified error encountered while removing user id [{i}]!"
+                    self._xlate("unknown_error_removing_user", user=i)
                 )
         elif op == "make_admin":
             if auth_level != 2:
                 query.message.reply_text(
-                    "You do not have admin permissions... Please authenticate with `/start <admin password>` and then try again."
+                    self._xlate(
+                        "admin_auth_required",
+                        commands=" OR ".join(
+                            [
+                                f"`/{c} <{self._xlate('admin_password')}>`"
+                                for c in settings.searcharr_start_command_aliases
+                            ]
+                        ),
+                    )
                 )
                 query.message.delete()
                 query.answer()
@@ -973,18 +1082,26 @@ class Searcharr(object):
                 context.bot.edit_message_text(
                     chat_id=query.message.chat.id,
                     message_id=query.message.message_id,
-                    text=f"Added admin access for user id [{i}]! " + reply_message,
+                    text=f"{self._xlate('added_admin_access', user=i)} {reply_message}",
                     reply_markup=reply_markup,
                 )
             except Exception as e:
                 logger.error(f"Error adding admin access for user id [{i}]: {e}")
                 query.message.reply_text(
-                    f"Unspecified error encountered while adding admin access for user id [{i}]!"
+                    self._xlate("unknown_error_adding_admin", user=i)
                 )
         elif op == "remove_admin":
             if auth_level != 2:
                 query.message.reply_text(
-                    "You do not have admin permissions... Please authenticate with `/start <admin password>` and then try again."
+                    self._xlate(
+                        "admin_auth_required",
+                        commands=" OR ".join(
+                            [
+                                f"`/{c} <{self._xlate('admin_password')}>`"
+                                for c in settings.searcharr_start_command_aliases
+                            ]
+                        ),
+                    )
                 )
                 query.message.delete()
                 query.answer()
@@ -1011,13 +1128,13 @@ class Searcharr(object):
                 context.bot.edit_message_text(
                     chat_id=query.message.chat.id,
                     message_id=query.message.message_id,
-                    text=f"Removed admin access for user id [{i}]! " + reply_message,
+                    text=f"{self._xlate('removed_admin_access', user=i)} {reply_message}",
                     reply_markup=reply_markup,
                 )
             except Exception as e:
                 logger.error(f"Error removing admin access for user id [{i}]: {e}")
                 query.message.reply_text(
-                    f"Unspecified error encountered while removing admin access for user id [{i}]!"
+                    self._xlate("unknown_error_removing_admin", user=i)
                 )
 
         query.answer()
@@ -1039,7 +1156,9 @@ class Searcharr(object):
         keyboardNavRow = []
         if i > 0:
             keyboardNavRow.append(
-                InlineKeyboardButton("< Prev", callback_data=f"{cid}^^^{i}^^^prev")
+                InlineKeyboardButton(
+                    self._xlate("prev_button"), callback_data=f"{cid}^^^{i}^^^prev"
+                )
             )
         if kind == "series" and r["tvdbId"]:
             keyboardNavRow.append(
@@ -1061,7 +1180,9 @@ class Searcharr(object):
             )
         if total_results > 1 and i < total_results - 1:
             keyboardNavRow.append(
-                InlineKeyboardButton("Next >", callback_data=f"{cid}^^^{i}^^^next")
+                InlineKeyboardButton(
+                    self._xlate("next_button"), callback_data=f"{cid}^^^{i}^^^next"
+                )
             )
         keyboard.append(keyboardNavRow)
 
@@ -1071,7 +1192,7 @@ class Searcharr(object):
                     keyboard.append(
                         [
                             InlineKeyboardButton(
-                                f"Add Tag: {tag['label']}",
+                                self._xlate("add_tag_button", tag=tag["label"]),
                                 callback_data=f"{cid}^^^{i}^^^add^^tt={tag['id']}",
                             )
                         ],
@@ -1079,7 +1200,7 @@ class Searcharr(object):
                 keyboard.append(
                     [
                         InlineKeyboardButton(
-                            "Finished Tagging",
+                            self._xlate("finished_tagging_button"),
                             callback_data=f"{cid}^^^{i}^^^add^^td=1",
                         )
                     ],
@@ -1089,7 +1210,7 @@ class Searcharr(object):
                     keyboard.append(
                         [
                             InlineKeyboardButton(
-                                f"Monitor {o}",
+                                self._xlate("monitor_button", option=o),
                                 callback_data=f"{cid}^^^{i}^^^add^^m={k}",
                             )
                         ],
@@ -1099,7 +1220,7 @@ class Searcharr(object):
                     keyboard.append(
                         [
                             InlineKeyboardButton(
-                                f"Add Quality: {q['name']}",
+                                self._xlate("add_quality_button", quality=q["name"]),
                                 callback_data=f"{cid}^^^{i}^^^add^^q={q['id']}",
                             )
                         ],
@@ -1109,7 +1230,7 @@ class Searcharr(object):
                     keyboard.append(
                         [
                             InlineKeyboardButton(
-                                f"Add to {p['path']}",
+                                self._xlate("add_path_button", path=p["path"]),
                                 callback_data=f"{cid}^^^{i}^^^add^^p={p['id']}",
                             )
                         ],
@@ -1120,18 +1241,21 @@ class Searcharr(object):
             if not r["id"]:
                 keyboardActRow.append(
                     InlineKeyboardButton(
-                        f"Add {kind.title()}!", callback_data=f"{cid}^^^{i}^^^add"
+                        self._xlate("add_button", kind=kind.title()),
+                        callback_data=f"{cid}^^^{i}^^^add",
                     ),
                 )
             else:
                 keyboardActRow.append(
                     InlineKeyboardButton(
-                        "Already Added!", callback_data=f"{cid}^^^{i}^^^noop"
+                        self._xlate("already_added_button"),
+                        callback_data=f"{cid}^^^{i}^^^noop",
                     ),
                 )
         keyboardActRow.append(
             InlineKeyboardButton(
-                "Cancel Search", callback_data=f"{cid}^^^{i}^^^cancel"
+                self._xlate("cancel_search_button"),
+                callback_data=f"{cid}^^^{i}^^^cancel",
             ),
         )
         if len(keyboardActRow):
@@ -1140,7 +1264,7 @@ class Searcharr(object):
             keyboard.append(
                 [
                     InlineKeyboardButton(
-                        "Add Series as Anime Type!",
+                        self._xlate("add_series_anime_button"),
                         callback_data=f"{cid}^^^{i}^^^add^^st=a",
                     )
                 ]
@@ -1157,7 +1281,7 @@ class Searcharr(object):
                 0:1024
             ]
         else:
-            reply_message = "Something went wrong!"
+            reply_message = self._xlate("unexpected_error")
 
         return (reply_message, reply_markup)
 
@@ -1167,14 +1291,17 @@ class Searcharr(object):
             keyboard.append(
                 [
                     InlineKeyboardButton(
-                        "Remove", callback_data=f"{cid}^^^{u['id']}^^^remove_user"
+                        self._xlate("remove_user_button"),
+                        callback_data=f"{cid}^^^{u['id']}^^^remove_user",
                     ),
                     InlineKeyboardButton(
                         f"{u['username'] if u['username'] != 'None' else u['id']}",
                         callback_data=f"{cid}^^^{u['id']}^^^noop",
                     ),
                     InlineKeyboardButton(
-                        "Remove Admin" if u["admin"] else "Make Admin",
+                        self._xlate("remove_admin_button")
+                        if u["admin"]
+                        else self._xlate("make_admin_button"),
                         callback_data=f"{cid}^^^{u['id']}^^^{'remove_admin' if u['admin'] else 'make_admin'}",
                     ),
                 ]
@@ -1183,22 +1310,29 @@ class Searcharr(object):
         if offset > 0:
             keyboardNavRow.append(
                 InlineKeyboardButton(
-                    "< Prev", callback_data=f"{cid}^^^{offset - num}^^^prev"
+                    self._xlate("prev_button"),
+                    callback_data=f"{cid}^^^{offset - num}^^^prev",
                 ),
             )
         keyboardNavRow.append(
-            InlineKeyboardButton("Done", callback_data=f"{cid}^^^{offset}^^^done"),
+            InlineKeyboardButton(
+                self._xlate("done"), callback_data=f"{cid}^^^{offset}^^^done"
+            ),
         )
         if total_results > 1 and offset + num < total_results:
             keyboardNavRow.append(
                 InlineKeyboardButton(
-                    "Next >", callback_data=f"{cid}^^^{offset + num}^^^next"
+                    self._xlate("next_button"),
+                    callback_data=f"{cid}^^^{offset + num}^^^next",
                 ),
             )
         keyboard.append(keyboardNavRow)
         reply_markup = InlineKeyboardMarkup(keyboard)
 
-        reply_message = f"Listing Searcharr users {offset + 1}-{min(offset + num, total_results)} of {total_results}."
+        reply_message = self._xlate(
+            "listing_users_pagination",
+            page_info=f"{offset + 1}-{min(offset + num, total_results)} of {total_results}",
+        )
         return (reply_message, reply_markup)
 
     def handle_error(self, update, context):
@@ -1213,20 +1347,51 @@ class Searcharr(object):
         auth_level = self._authenticated(update.message.from_user.id)
         if not auth_level:
             update.message.reply_text(
-                "Please authenticate with `/start <password>` and then try again."
+                self._xlate(
+                    "auth_required",
+                    commands=" OR ".join(
+                        [
+                            f"`/{c} <{self._xlate('password')}>`"
+                            for c in settings.searcharr_start_command_aliases
+                        ]
+                    ),
+                )
             )
             return
+        sonarr_help = self._xlate(
+            "help_sonarr",
+            series_commands=" OR ".join(
+                [
+                    f"`/{c} {self._xlate('title').title()}`"
+                    for c in settings.sonarr_series_command_aliases
+                ]
+            ),
+        )
+        radarr_help = self._xlate(
+            "help_radarr",
+            movie_commands=" OR ".join(
+                [
+                    f"`/{c} {self._xlate('title').title()}`"
+                    for c in settings.radarr_movie_command_aliases
+                ]
+            ),
+        )
         if settings.sonarr_enabled and settings.radarr_enabled:
-            resp = f'Use {" OR ".join([f"/{c} <title>" for c in settings.radarr_movie_command_aliases])} to add a movie to Radarr, and {" OR ".join([f"/{c} <title>" for c in settings.sonarr_series_command_aliases])} to add a series to Sonarr.'
+            resp = f"{sonarr_help} {radarr_help}"
         elif settings.sonarr_enabled:
-            resp = f'Use {" OR ".join([f"/{c} <title>" for c in settings.sonarr_series_command_aliases])} to add a series to Sonarr.'
+            resp = sonarr_help
         elif settings.radarr_enabled:
-            resp = f'Use {" OR ".join([f"/{c} <title>" for c in settings.radarr_movie_command_aliases])} to add a movie to Radarr.'
+            resp = radarr_help
         else:
-            resp = "Sorry, but all of my features are currently disabled."
+            resp = self._xlate("no_features")
 
         if auth_level == 2:
-            resp += " Since you are an admin, you can also use /users to manage users."
+            resp += " " + self._xlate(
+                "admin_help",
+                commands=" OR ".join(
+                    [f"/{c}" for c in settings.searcharr_users_command_aliases]
+                ),
+            )
 
         update.message.reply_text(resp)
 
@@ -1244,15 +1409,21 @@ class Searcharr(object):
         self._init_db()
         updater = Updater(self.token, use_context=True)
 
-        updater.dispatcher.add_handler(CommandHandler("help", self.cmd_help))
-        updater.dispatcher.add_handler(CommandHandler("start", self.cmd_start))
+        for c in settings.searcharr_help_command_aliases:
+            logger.debug(f"Registering [/{c}] as a help command")
+            updater.dispatcher.add_handler(CommandHandler(c, self.cmd_help))
+        for c in settings.searcharr_start_command_aliases:
+            logger.debug(f"Registering [/{c}] as a start command")
+            updater.dispatcher.add_handler(CommandHandler(c, self.cmd_start))
         for c in settings.radarr_movie_command_aliases:
             logger.debug(f"Registering [/{c}] as a movie command")
             updater.dispatcher.add_handler(CommandHandler(c, self.cmd_movie))
         for c in settings.sonarr_series_command_aliases:
             logger.debug(f"Registering [/{c}] as a series command")
             updater.dispatcher.add_handler(CommandHandler(c, self.cmd_series))
-        updater.dispatcher.add_handler(CommandHandler("users", self.cmd_users))
+        for c in settings.searcharr_users_command_aliases:
+            logger.debug(f"Registering [/{c}] as a users command")
+            updater.dispatcher.add_handler(CommandHandler(c, self.cmd_users))
         updater.dispatcher.add_handler(CallbackQueryHandler(self.callback))
         if not self.DEV_MODE:
             updater.dispatcher.add_error_handler(self.handle_error)
@@ -1559,6 +1730,36 @@ class Searcharr(object):
 
         con.commit()
         con.close()
+
+    def _load_language(self):
+        if not hasattr(settings, "searcharr_language"):
+            logger.warning(
+                "No language defined! Defaulting to en-us. Please add searcharr_language to settings.py if you want another language, where the value is a filename (without .yml) in the lang folder."
+            )
+            settings.searcharr_language = "en-us"
+        logger.debug(
+            f"Attempting to load language file: lang/{settings.searcharr_language}.yml..."
+        )
+        try:
+            with open(
+                f"lang/{settings.searcharr_language}.yml", mode="r", encoding="utf-8"
+            ) as y:
+                lang = yaml.load(y, Loader=yaml.SafeLoader)
+        except FileNotFoundError:
+            logger.error(
+                f"Error loading lang/{settings.searcharr_language}.yml. Confirm searcharr_language in settings.py has a corresponding yml file in the lang subdirectory. Using default (English) language file."
+            )
+            with open("lang/en-us.yml", "r") as y:
+                lang = yaml.load(y, Loader=yaml.SafeLoader)
+        return lang
+
+    def _xlate(self, key, **kwargs):
+        pass
+        if t := self._lang.get(key):
+            return t.format(**kwargs)
+        else:
+            logger.error(f"No translation found for key [{key}]!")
+            return "(translation not found)"
 
 
 if __name__ == "__main__":

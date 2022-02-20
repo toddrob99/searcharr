@@ -1,0 +1,59 @@
+language_ietf: pt-br
+language_label: Brazilian Portuguese
+
+movie: filme
+series: séries
+season: temporada
+title: título
+title_here: título aqui
+password: senha
+admin_password: senha de administrador
+admin_auth_success: Autenticação de admin bem-sucedida. Use {commands} para comandos.
+already_authenticated: Você já está autenticado. Tente {commands} para informações de uso.
+auth_successful: Autenticação bem-sucedida. Use {commands} para comandos.
+incorrect_pw: Senha incorreta.
+auth_required: Parece que não te conheço... Por favor, autentique com {commands} e tente novamente.
+admin_auth_required: Você não tem permissões de administrador... Por favor, autentique com {commands} e tente novamente.
+radarr_disabled: Desculpe, mas o suporte a filmes está desativado.
+include_movie_title_in_cmd: Por favor, inclua o título do filme no comando, por exemplo. {commands}
+no_matching_movies: Desculpe, mas não encontrei nenhum filme correspondente.
+sonarr_disabled: Desculpe, mas o suporte da série está desativado.
+include_series_title_in_cmd: Por favor, inclua o título da série no comando, por exemplo. {commands}
+no_matching_series: Desculpe, mas não encontrei nenhuma série correspondente.
+no_users_found: Desculpe, mas não encontrei nenhum usuário. Isso parece errado...
+convo_not_found: Recebi seu comando, mas não reconheço a conversa. Por favor, comece de novo.
+search_canceled: Pesquisa cancelada!
+no_root_folders: "Erro ao adicionar {kind}: nenhuma pasta raiz habilitada para {app}! Verifique a configuração do Searcharr e tente novamente."
+no_quality_profiles: "Erro ao adicionar {kind}: nenhum perfil de qualidade habilitado para {app}! Verifique a configuração do Searcharr e tente novamente."
+all_seasons: Todas temporadas
+first_season: Apenas a primeira temporada
+latest_season: Apenas a última temporada
+added: Adicionado com sucesso {title}!
+unknown_error_adding: Erro não especificado encontrado ao adicionar {kind}!
+removed_user: Todos os acessos do ID de usuário foram removidos com sucesso [{user}]!
+unknown_error_removing_user: Erro não especificado encontrado ao remover o ID do usuário [{user}]!
+added_admin_access: Adicionado acesso de administrador para o ID do usuário [{i}]!
+unknown_error_adding_admin: Erro não especificado encontrado ao adicionar acesso de administrador para o ID do usuário [{user}]!
+removed_admin_access: Acesso de administrador removido para o ID do usuário [{user}]!
+unknown_error_removing_admin: Erro não especificado encontrado ao remover o acesso de administrador para o ID do usuário [{user}]!
+prev_button: < Voltar
+next_button: Próximo >
+add_tag_button: "Add Tag: {tag}"
+finished_tagging_button: Marcação concluída
+monitor_button: Monitorar {option}
+add_quality_button: "Add Qualidade: {quality}"
+add_path_button: Add para {path}
+add_button: Add {kind}!
+already_added_button: Já adicionado!
+cancel_search_button: Cancelar Busca
+add_series_anime_button: Add Séries como tipo de anime!
+unexpected_error: Algo deu errado!
+remove_user_button: Remover
+make_admin_button: Tornar Admin
+remove_admin_button: Remover Admin
+done: feito
+listing_users_pagination: Listando usuários do Searcharr {page_info}.
+help_sonarr: Use {series_commands} para adicionar uma série ao Sonarr.
+help_radarr: Use {movie_commands} para adicionar um filme ao Radarr.
+no_features: Desculpe, mas todos os meus recursos estão desativados no momento.
+admin_help: Como você é um administrador, você também pode usar {commands} para gerenciar usuários.
