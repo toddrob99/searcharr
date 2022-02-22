@@ -1241,7 +1241,7 @@ class Searcharr(object):
             if not r["id"]:
                 keyboardActRow.append(
                     InlineKeyboardButton(
-                        self._xlate("add_button", kind=kind.title()),
+                        self._xlate("add_button", kind=self._xlate(kind).title()),
                         callback_data=f"{cid}^^^{i}^^^add",
                     ),
                 )
