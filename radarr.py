@@ -101,7 +101,7 @@ class Radarr(object):
         self.logger.debug(f"Additional data: {additional_data}")
 
         path = additional_data["p"]
-        quality = additional_data["q"]
+        quality = int(additional_data["q"])
         tags = additional_data.get("t", "")
         if len(tags):
             tag_ids = [int(x) for x in tags.split(",")]
@@ -161,11 +161,7 @@ class Radarr(object):
         if not r:
             return []
         elif allowed_tags == []:
-            return [
-                x
-                for x in r
-                if not x["label"].startswith("searcharr-")
-            ]
+            return [x for x in r if not x["label"].startswith("searcharr-")]
         else:
             return [
                 x
