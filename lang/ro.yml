@@ -1,11 +1,11 @@
 language_ietf: ro
 language_label: Romanian
 
-movie: Film
-series: Serial
-season: Sezon
-title: Titlu
-title_here: Titlu aici
+movie: film
+series: serial
+season: sezon
+title: titlu
+title_here: titlu aici
 password: parola
 admin_password: parola administrator
 admin_auth_success: Autentificare admin reusita. Utilizati {commands} pentru comenzi.
