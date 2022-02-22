@@ -16,10 +16,10 @@ auth_required: Se pare că nu sunteti autentificat... Va rugam sa va autentifica
 admin_auth_required: Nu aveți permisiuni de administrator... Vă rugăm să vă autentificați cu {commands} și apoi încercați din nou.
 radarr_disabled: Scuze, dar suportul pentru filme este dezactivat.
 include_movie_title_in_cmd: Vă rugăm să includeți titlul filmului în comandă, de exemplu {commands}
-no_matching_movies: Îmi pare rău, dar nu am găsit niciun film potrivit.
+no_matching_movies: Îmi pare rău, dar nu am găsit niciun film cu titlu acesta.
 sonarr_disabled: Ne pare rău, dar suportul pentru seriale este dezactivat.
 include_series_title_in_cmd: Vă rugăm să includeți titlul serialului în comandă, de exemplu {commands}
-no_matching_series: Îmi pare rău, dar nu am găsit nici un serial cu numele acesta.
+no_matching_series: Îmi pare rău, dar nu am găsit nici un serial cu titlul acesta.
 no_users_found: Îmi pare rău, dar nu am găsit nici un utilizator. Pare greșit...
 convo_not_found: Am primit comanda ta, dar nu recunosc conversația. Vă rugăm să începeți din nou.
 search_canceled: Căutare anulată!
@@ -45,7 +45,7 @@ add_quality_button: "Adăugați calitate: {quality}"
 add_path_button: Adaugă la {path}
 add_button: Adauga {kind}!
 already_added_button: Deja Adaugat!
-cancel_search_button: Cautare anulata
+cancel_search_button: Anulaţi Cautarea
 add_series_anime_button: Adăugați serialul ca anime!
 unexpected_error: Ceva n-a mers bine!
 remove_user_button: Elimina
