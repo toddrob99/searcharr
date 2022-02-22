@@ -22,7 +22,7 @@ import radarr
 import sonarr
 import settings
 
-__version__ = "2.1-b2"
+__version__ = "2.1-b3"
 
 DBPATH = os.path.join(os.path.dirname(os.path.realpath(__file__)), "data")
 DBFILE = "searcharr.db"
