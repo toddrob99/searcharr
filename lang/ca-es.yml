@@ -1,0 +1,59 @@
+language_ietf: ca-es
+language_label: Català
+
+movie: pel·lícula
+series: sèrie
+season: temporada
+title: títol
+title_here: títol aquí
+password: contrasenya
+admin_password: contrasenya d'administrador
+admin_auth_success: Autenticació d'administrador correcta. Utilitza {commands} per ordres.
+already_authenticated: Ja estàs autenticat. Prova {commands} per informació d'ús.
+auth_successful: Autenticació correcta. Utilitza {commands} per ordres.
+incorrect_pw: Contrasenya incorrecta.
+auth_required: Sembla que no et conec... Sisplau, autentica't amb {commands} i torna a intentar-ho.
+admin_auth_required: No tens permís d'administrador... Sisplau, autentica't amb {commands} i torna a intentar-ho.
+radarr_disabled: Ho sento, però el suport per pel·lícules està desactivat.
+include_movie_title_in_cmd: Sisplau, inclou el títol de la pel·lícula en la ordre, per exemple {commands}
+no_matching_movies: Ho sento, però no he trobat cap pel·lícula que compleixi el criteri de cerca.
+sonarr_disabled: Ho sento, però el suport per sèries està desactivat.
+include_series_title_in_cmd: Sisplau, inclou el títol de la sèrie en la ordre, per exemple {commands}
+no_matching_series: Ho sento, però no he trobat cap sèrie que compleixi el criteri de cerca.
+no_users_found: Ho sento, però no he trobat cap usuari. Sembla estrany...
+convo_not_found: He rebut la teva ordre, però no reconec la conversa. Sisplau, comença de nou.
+search_canceled: Cerca cancel·lada!
+no_root_folders: "Error afegint {kind}: no hi han carpetes arrel per {app}! Sisplau, comprova la teva configuració de Searcharr i torna a intentar-ho."
+no_quality_profiles: "Error afegint {kind}: no hi han perfils de qualitat activats per {app}! Sisplau, comprova la teva configuració de Searcharr i torna a intentar-ho."
+all_seasons: Totes les Temporades
+first_season: Només la Primera Temporada
+latest_season: Només la Última Temporada
+added: S'ha afegit {title} correctament!
+unknown_error_adding: Error no especificat trobat en intentar afegir {kind}!
+removed_user: S'ha restringit tot accés per l'usuari amb id [{user}] correctament!
+unknown_error_removing_user: Error no especificat trobat en intentar eliminar l'usuari amb id [{user}]!
+added_admin_access: S'ha otorgat accés d'administrador per l'usuari [{user}]!
+unknown_error_adding_admin: Error no especificat trobat en intentar otorgar accés d'administrador per l'usuari amb id [{user}]!
+removed_admin_access: S'ha eliminat l'accés d'administrador per l'usuari amb id [{user}] correctament!
+unknown_error_removing_admin: Error no especificat trobat en intentar eliminar l'accés d'administrador per l'usuari amb id [{user}]!
+prev_button: < Prev
+next_button: Seg >
+add_tag_button: "Afegir Etiqueta: {tag}"
+finished_tagging_button: Etiquetat Completat
+monitor_button: Monitoratge {option}
+add_quality_button: "Afegir Qualitat: {quality}"
+add_path_button: Afegir a {path}
+add_button: "{kind} afegit!"
+already_added_button: "Ja Afegit!"
+cancel_search_button: Cancel·lar Cerca
+add_series_anime_button: Afegir Sèrie en tipus Anime!
+unexpected_error: Alguna cosa ha anat malament!
+remove_user_button: Eliminar
+make_admin_button: Fer Administrador
+remove_admin_button: Eliminar Administrador
+done: Fet
+listing_users_pagination: Enumerant usuaris de Searcharr {page_info}.
+help_sonarr: Utilitza {series_commands} per afegir una sèrie a Sonarr.
+help_radarr: Utilitza {movie_commands} per afegir una pel·lícula a Radarr.
+no_features: Ho sento, però totes les meves funcions estàn desactivades temporalment.
+admin_help: Com que ets administrador, també pots utilitzar {commands} per gestionar els usuaris.
