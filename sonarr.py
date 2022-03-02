@@ -99,7 +99,7 @@ class Sonarr(object):
         self.logger.debug(f"Additional data: {additional_data}")
 
         path = additional_data["p"]
-        quality = additional_data["q"]
+        quality = int(additional_data["q"])
         monitor_options = int(additional_data.get("m", 0))
         if monitor_options == 1:
             # Monitor only the first season
@@ -173,11 +173,7 @@ class Sonarr(object):
         if not r:
             return []
         elif allowed_tags == []:
-            return [
-                x
-                for x in r
-                if not x["label"].startswith("searcharr-")
-            ]
+            return [x for x in r if not x["label"].startswith("searcharr-")]
         else:
             return [
                 x

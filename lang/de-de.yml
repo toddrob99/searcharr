@@ -1,0 +1,59 @@
+language_ietf: de-de
+language_label: German
+
+movie: Film
+series: Serie
+season: Staffel
+title: Title
+title_here: Titel hier
+password: Kennwort
+admin_password: admin Kennwort
+admin_auth_success: Admin Authentifizierung erfolgreich. Verwenden Sie {commands} für Befehle.
+already_authenticated: Sie sind bereits authentifiziert. Versuchen Sie {commands} für Nutzungsinformationen.
+auth_successful: Authentifizierung erfolgreich. Verwenden Sie {commands} für Befehle.
+incorrect_pw: Falsches Kennwort.
+auth_required: Ich scheine Sie nicht zu kennen... Bitte authentifizieren Sie sich mit {commands} und versuchen Sie es erneut.
+admin_auth_required: Sie haben keine Administratorrechte... Bitte authentifizieren Sie sich mit {commands} und versuchen Sie es erneut.
+radarr_disabled: Tut mir leid, aber die Filmunterstützung ist deaktiviert.
+include_movie_title_in_cmd: Bitte geben Sie den Filmtitel in den Befehl ein, z.b. {commands}
+no_matching_movies: Tut mir leid, aber ich habe keine passenden Filme gefunden.
+sonarr_disabled: Tut mir leid, aber die Serienunterstützung ist deaktiviert.
+include_series_title_in_cmd: Bitte geben Sie den Serientitel in den Befehl ein, z.b. {commands}
+no_matching_series: Tut mir leid, aber ich habe keine passende Serie gefunden.
+no_users_found: Tut mir leid, aber ich habe keine Benutzer gefunden. Das scheint falsch...
+convo_not_found: Ich habe Ihren Befehl erhalten, aber ich erkenne das Gespräch nicht. Bitte neu starten.
+search_canceled: Suche abgebrochen!
+no_root_folders: "Fehler beim Hinzufügen {kind}: keine Root-Ordner aktiviert für {app}! Bitte überprüfen Sie Ihre Searcharr-Konfiguration und versuchen Sie es erneut."
+no_quality_profiles: "Fehler beim Hinzufügen {kind}: keine Qualitätsprofile aktiviert für {app}! Bitte überprüfen Sie Ihre Searcharr-Konfiguration und versuchen Sie es erneut."
+all_seasons: Alle Staffel
+first_season: Nur die erste Staffel
+latest_season: Nur letzte Staffel
+added: Erfolgreich hinzugefügt {title}!
+unknown_error_adding: Beim Hinzufügen ist ein unbekannter Fehler aufgetreten {kind}!
+removed_user: Der gesamte Zugriff für die Benutzer-ID wurde erfolgreich entfernt [{user}]!
+unknown_error_removing_user: Beim Entfernen der Benutzer-ID ist ein unbekannter Fehler aufgetreten [{user}]!
+added_admin_access: Administratorzugriff für Benutzer-ID hinzugefügt [{user}]!
+unknown_error_adding_admin: Beim Hinzufügen des Administratorzugriffs für die Benutzer-ID ist ein unbekannter Fehler aufgetreten [{user}]!
+removed_admin_access: Administratorzugriff für Benutzer-ID entfernt [{user}]!
+unknown_error_removing_admin: Beim Entfernen des Administratorzugriffs für die Benutzer-ID ist ein unbekannter Fehler aufgetreten [{user}]!
+prev_button: < Vorher
+next_button: nächste >
+add_tag_button: "Etikette hinzufügen: {tag}"
+finished_tagging_button: Fertiges Etikette
+monitor_button: überwachen {option}
+add_quality_button: "Qualität hinzufügen: {quality}"
+add_path_button: Hinzufügen zu {path}
+add_button: Hinzufügen {kind}!
+already_added_button: Schon hinzugefügt!
+cancel_search_button: Suche abbrechen
+add_series_anime_button: Serie als Anime-Typ hinzufügen!
+unexpected_error: Etwas ist schief gelaufen!
+remove_user_button: Entfernen
+make_admin_button: Administrator Machen
+remove_admin_button: Administrator entfernen
+done: Erledigt
+listing_users_pagination: Searcharr-Benutzer auflisten {page_info}.
+help_sonarr: Verwenden Sie {series_commands} um Sonarr eine Serie hinzuzufügen.
+help_radarr: Verwenden Sie {movie_commands} um einen Film zu Radarr hinzuzufügen.
+no_features: Tut mir leid, aber alle meine Funktionen sind derzeit deaktiviert.
+admin_help: Da Sie ein Administrator sind, können Sie auch {commands} verwenden, um Benutzer zu verwalten.
