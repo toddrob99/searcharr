@@ -16,7 +16,7 @@ auth_required: I don't seem to know you... Please authenticate with {commands} a
 admin_auth_required: You do not have admin permissions... Please authenticate with {commands} and then try again.
 radarr_disabled: Sorry, but movie support is disabled.
 include_movie_title_in_cmd: Please include the movie title in the command, e.g. {commands}
-no_matching_movies: Sorry, but I didn't find any matching movie.
+no_matching_movies: Sorry, but I didn't find any matching movies.
 sonarr_disabled: Sorry, but series support is disabled.
 include_series_title_in_cmd: Please include the series title in the command, e.g. {commands}
 no_matching_series: Sorry, but I didn't find any matching series.
