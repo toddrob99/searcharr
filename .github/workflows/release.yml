@@ -30,4 +30,4 @@ jobs:
         with:
           platforms: linux/amd64,linux/arm64,linux/arm/v7
           push: true
-          tags: toddrob/searcharr:${{steps.get_version.outputs.version}},toddrob/searcharr:${{steps.get_version.outputs.major}},toddrob/searcharr:latest
+          tags: toddrob/searcharr:${{steps.get_version.outputs.version}},toddrob/searcharr:v${{steps.get_version.outputs.major}},toddrob/searcharr:latest

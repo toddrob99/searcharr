@@ -1,5 +1,5 @@
 # Searcharr
-[![Docker Pulls](https://img.shields.io/docker/pulls/toddrob/searcharr?style=plastic)](https://hub.docker.com/r/toddrob/searcharr)
+[![Docker Pulls](https://img.shields.io/docker/pulls/toddrob/searcharr?style=plastic)](https://hub.docker.com/r/toddrob/searcharr) [![release](https://github.com/toddrob99/searcharr/actions/workflows/release.yml/badge.svg?event=release)](https://github.com/toddrob99/searcharr/actions/workflows/release.yml) [![beta](https://github.com/toddrob99/searcharr/actions/workflows/beta.yml/badge.svg?branch=beta)](https://github.com/toddrob99/searcharr/actions/workflows/beta.yml)
 ### Sonarr & Radarr Telegram Bot
 ### By Todd Roberts
 https://github.com/toddrob99/searcharr
