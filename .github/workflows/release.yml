@@ -14,6 +14,10 @@ jobs:
       -
         name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v1
+      - 
+        name: Get Version
+        id: get_version
+        uses: battila7/get-version-action@v2
       -
         name: Login to DockerHub
         uses: docker/login-action@v1 
@@ -26,4 +30,4 @@ jobs:
         with:
           platforms: linux/amd64,linux/arm64,linux/arm/v7
           push: true
-          tags: toddrob/searcharr:${{github.action_ref}},toddrob/searcharr:latest
+          tags: toddrob/searcharr:${{steps.get_version.outputs.version}},toddrob/searcharr:${{steps.get_version.outputs.major}},toddrob/searcharr:latest
