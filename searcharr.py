@@ -22,7 +22,7 @@ import radarr
 import sonarr
 import settings
 
-__version__ = "2.1.3"
+__version__ = "2.1.4"
 
 DBPATH = os.path.join(os.path.dirname(os.path.realpath(__file__)), "data")
 DBFILE = "searcharr.db"
@@ -382,7 +382,7 @@ class Searcharr(object):
                     reply_markup=reply_markup,
                 )
             except BadRequest as e:
-                if str(e) == "Wrong type of the web page content":
+                if str(e) in self._bad_request_poster_error_messages:
                     logger.error(
                         f"Error sending photo [{r['remotePoster']}]: BadRequest: {e}. Attempting to send with default poster..."
                     )
@@ -453,7 +453,7 @@ class Searcharr(object):
                     reply_markup=reply_markup,
                 )
             except BadRequest as e:
-                if str(e) == "Wrong type of the web page content":
+                if str(e) in self._bad_request_poster_error_messages:
                     logger.error(
                         f"Error sending photo [{r['remotePoster']}]: BadRequest: {e}. Attempting to send with default poster..."
                     )
@@ -591,7 +591,7 @@ class Searcharr(object):
                         reply_markup=reply_markup,
                     )
                 except BadRequest as e:
-                    if str(e) == "Wrong type of the web page content":
+                    if str(e) in self._bad_request_poster_error_messages:
                         logger.error(
                             f"Error sending photo [{r['remotePoster']}]: BadRequest: {e}. Attempting to send with default poster..."
                         )
@@ -641,7 +641,7 @@ class Searcharr(object):
                         reply_markup=reply_markup,
                     )
                 except BadRequest as e:
-                    if str(e) == "Wrong type of the web page content":
+                    if str(e) in self._bad_request_poster_error_messages:
                         logger.error(
                             f"Error sending photo [{r['remotePoster']}]: BadRequest: {e}. Attempting to send with default poster..."
                         )
@@ -704,7 +704,7 @@ class Searcharr(object):
                             reply_markup=reply_markup,
                         )
                     except BadRequest as e:
-                        if str(e) == "Wrong type of the web page content":
+                        if str(e) in self._bad_request_poster_error_messages:
                             logger.error(
                                 f"Error sending photo [{r['remotePoster']}]: BadRequest: {e}. Attempting to send with default poster..."
                             )
@@ -786,7 +786,7 @@ class Searcharr(object):
                             reply_markup=reply_markup,
                         )
                     except BadRequest as e:
-                        if str(e) == "Wrong type of the web page content":
+                        if str(e) in self._bad_request_poster_error_messages:
                             logger.error(
                                 f"Error sending photo [{r['remotePoster']}]: BadRequest: {e}. Attempting to send with default poster..."
                             )
@@ -851,7 +851,7 @@ class Searcharr(object):
                         reply_markup=reply_markup,
                     )
                 except BadRequest as e:
-                    if str(e) == "Wrong type of the web page content":
+                    if str(e) in self._bad_request_poster_error_messages:
                         logger.error(
                             f"Error sending photo [{r['remotePoster']}]: BadRequest: {e}. Attempting to send with default poster..."
                         )
@@ -905,7 +905,7 @@ class Searcharr(object):
                             reply_markup=reply_markup,
                         )
                     except BadRequest as e:
-                        if str(e) == "Wrong type of the web page content":
+                        if str(e) in self._bad_request_poster_error_messages:
                             logger.error(
                                 f"Error sending photo [{r['remotePoster']}]: BadRequest: {e}. Attempting to send with default poster..."
                             )
@@ -1760,6 +1760,11 @@ class Searcharr(object):
         else:
             logger.error(f"No translation found for key [{key}]!")
             return "(translation not found)"
+
+    _bad_request_poster_error_messages = [
+        "Wrong type of the web page content",
+        "Wrong file identifier/http url specified",
+    ]
 
 
 if __name__ == "__main__":
