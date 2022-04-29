@@ -22,7 +22,7 @@ import radarr
 import sonarr
 import settings
 
-__version__ = "2.1.4"
+__version__ = "2.1.5"
 
 DBPATH = os.path.join(os.path.dirname(os.path.realpath(__file__)), "data")
 DBFILE = "searcharr.db"
@@ -1764,6 +1764,7 @@ class Searcharr(object):
     _bad_request_poster_error_messages = [
         "Wrong type of the web page content",
         "Wrong file identifier/http url specified",
+        "Media_empty",
     ]
 
 
