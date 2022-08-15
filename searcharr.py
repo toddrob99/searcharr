@@ -96,6 +96,35 @@ class Searcharr(object):
                 )
                 self.sonarr._quality_profiles = quality_profiles
 
+            language_profiles = []
+            if not isinstance(settings.sonarr_language_profile_id, list):
+                settings.sonarr_language_profile_id = [
+                    settings.sonarr_language_profile_id
+                ]
+            for i in settings.sonarr_language_profile_id:
+                logger.debug(
+                    f"Looking up/validating Sonarr language profile id for [{i}]..."
+                )
+                foundProfile = self.sonarr.lookup_language_profile(i)
+                if not foundProfile:
+                    logger.error(f"Sonarr language profile id/name [{i}] is invalid!")
+                else:
+                    logger.debug(
+                        f"Found Sonarr language profile for [{i}]: [{foundProfile}]"
+                    )
+                    language_profiles.append(foundProfile)
+            if not len(language_profiles):
+                logger.warning(
+                    f"No valid Sonarr language profile(s) provided! Using all of the language profiles I found in Sonarr: {self.sonarr._language_profiles}"
+                )
+            else:
+                logger.debug(
+                    f"Using the following Sonarr language profile(s): {[(x['id'], x['name']) for x in language_profiles]}"
+                )
+                self.sonarr._language_profiles = language_profiles
+
+
+            
             root_folders = []
             if not hasattr(settings, "sonarr_series_paths"):
                 settings.sonarr_series_paths = []
@@ -1149,6 +1178,7 @@ class Searcharr(object):
         add=False,
         paths=None,
         quality_profiles=None,
+        language_profiles=None
         monitor_options=None,
         tags=None,
     ):
