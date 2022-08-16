@@ -853,6 +853,68 @@ class Searcharr(object):
                     query.answer()
                     return
 
+            if not additional_data.get("l"):
+                language_profiles = (
+                    self.sonarr._language_profiles
+                    if convo["type"] == "series"
+                    else self.radarr._language_profiles
+                )
+                if len(language_profiles) > 1:
+                    # prepare response to prompt user to select language profile, and return
+                    reply_message, reply_markup = self._prepare_response(
+                        convo["type"],
+                        r,
+                        cid,
+                        i,
+                        len(convo["results"]),
+                        add=True,
+                        language_profiles=language_profiles,
+                    )
+                    try:
+                        query.message.edit_media(
+                            media=InputMediaPhoto(r["remotePoster"]),
+                            reply_markup=reply_markup,
+                        )
+                    except BadRequest as e:
+                        if str(e) in self._bad_request_poster_error_messages:
+                            logger.error(
+                                f"Error sending photo [{r['remotePoster']}]: BadRequest: {e}. Attempting to send with default poster..."
+                            )
+                            query.message.edit_media(
+                                media=InputMediaPhoto(
+                                    "https://artworks.thetvdb.com/banners/images/missing/movie.jpg"
+                                ),
+                                reply_markup=reply_markup,
+                            )
+                        else:
+                            raise
+                    query.bot.edit_message_caption(
+                        chat_id=query.message.chat_id,
+                        message_id=query.message.message_id,
+                        caption=reply_message,
+                        reply_markup=reply_markup,
+                    )
+                    query.answer()
+                    return
+                elif len(language_profiles) == 1:
+                    logger.debug(
+                        f"Only one language profile enabled. Adding/Updating additional data for cid=[{cid}], key=[q], value=[{language_profiles[0]['id']}]..."
+                    )
+                    self._update_add_data(cid, "l", language_profiles[0]["id"])
+                else:
+                    self._delete_conversation(cid)
+                    query.message.reply_text(
+                        self._xlate(
+                            "no_language_profiles",
+                            kind=self._xlate(convo["type"]),
+                            app="Sonarr" if convo["type"] == "series" else "Radarr",
+                        )
+                    )
+                    query.message.delete()
+                    query.answer()
+                    return
+
+
             if (
                 convo["type"] == "series"
                 and settings.sonarr_season_monitor_prompt
@@ -1178,7 +1240,7 @@ class Searcharr(object):
         add=False,
         paths=None,
         quality_profiles=None,
-        language_profiles=None
+        language_profiles=None,
         monitor_options=None,
         tags=None,
     ):
@@ -1252,6 +1314,16 @@ class Searcharr(object):
                             InlineKeyboardButton(
                                 self._xlate("add_quality_button", quality=q["name"]),
                                 callback_data=f"{cid}^^^{i}^^^add^^q={q['id']}",
+                            )
+                        ],
+                    )
+            elif language_profiles:
+                for l in language_profiles:
+                    keyboard.append(
+                        [
+                            InlineKeyboardButton(
+                                self._xlate("select_language_button", language=l["name"]),
+                                callback_data=f"{cid}^^^{i}^^^add^^l={l['id']}",
                             )
                         ],
                     )
