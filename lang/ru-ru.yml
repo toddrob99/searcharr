@@ -1,0 +1,59 @@
+language_ietf: ru-ru
+language_label: Русский
+
+movie: фильм
+series: сериал
+season: сезон
+title: название
+title_here: название сюда
+password: пароль
+admin_password: пароль администратора
+admin_auth_success: Успешно авторизован как администратор. Используйте {commands} для команд.
+already_authenticated: Вы уже авторизованы. Попробуйте {commands} для информации об использовании.
+auth_successful: Авторизация успешна. Используйте {commands} для команд.
+incorrect_pw: Неправильный пароль.
+auth_required: Я вас не знаю... Пожалуйста, авторизуйтесь с помощью {commands} и попробуйте еще раз.
+admin_auth_required: У вас нет прав администратора... Пожалуйста, авторизуйтесь с помощью {commands} и попробуйте еще раз.
+radarr_disabled: Извините, но поддержка фильмов отключена.
+include_movie_title_in_cmd: Пожалуйста, добавьте название фильма к команде, например {commands}
+no_matching_movies: Извините, но я не смог найти подходящие фильмы.
+sonarr_disabled: Извините, но поддержка сериалов отключена.
+include_series_title_in_cmd: Пожалуйста, добавьте название сериала к команде, например {commands}
+no_matching_series: Извините, но я не смог найти подходящие сериалы.
+no_users_found: Извините, но я не смог найти пользователей. Что-то пошло не так...
+convo_not_found: Я получил вашу команду, но я не узнаю разговор. Пожалуйста, начните заново.
+search_canceled: Поиск отменён!
+no_root_folders: "Ошибка при добавлении {kind}: нет включенных корневых папок для {app}! Пожалуйста, проверьте вашу конфигурацию Searcharr и попробуйте еще раз."
+no_quality_profiles: "Ошибка при добавлении {kind}: нет включенных профилей качества для {app}! Пожалуйста, проверьте вашу конфигурацию Searcharr и попробуйте еще раз."
+all_seasons: Все сезоны
+first_season: Только первый сезон
+latest_season: Только последний сезон
+added: Успешно добавлен: {title}!
+unknown_error_adding: Произошла неожиданная ошибка при добавлении {kind}!
+removed_user: Успешно удален весь доступ для пользователя [{user}]!
+unknown_error_removing_user: Произошла неожиданная ошибка при удалении пользователя [{user}]!
+added_admin_access: Добавлены права администратора для пользователя [{user}]!
+unknown_error_adding_admin: Произошла неожиданная ошибка при добавлении прав администратора для пользователя [{user}]!
+removed_admin_access: Удалены права администратора для пользователя [{user}]!
+unknown_error_removing_admin: Произошла неожиданная ошибка при удалении прав администратора для пользователя [{user}]!
+prev_button: < Пред.
+next_button: След. >
+add_tag_button: "Добавить тэг: {tag}"
+finished_tagging_button: Закончить тэггирование
+monitor_button: Отслеживать {option}
+add_quality_button: "Добавить качество: {quality}"
+add_path_button: Добавить в {path}
+add_button: Добавить {kind}!
+already_added_button: Уже добавлен!
+cancel_search_button: Отменить поиск
+add_series_anime_button: Добавить сериал как Аниме!
+unexpected_error: Что-то пошло не так!
+remove_user_button: Удалить
+make_admin_button: Сделать администратором
+remove_admin_button: Удалить права администратора
+done: Сделано
+listing_users_pagination: Список пользователей Searcharr {page_info}.
+help_sonarr: Используйте {series_commands} для добавления сериалов в Sonarr.
+help_radarr: Используйте {movie_commands} для добавления фильмов в Radarr.
+no_features: Извините, но все мои функции, на данный момент, отключены.
+admin_help: У вас есть права администратора, поэтому вы можете использовать {commands} для управления пользователям.
