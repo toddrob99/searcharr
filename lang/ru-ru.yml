@@ -28,7 +28,7 @@ no_quality_profiles: "Ошибка при добавлении {kind}: нет в
 all_seasons: Все сезоны
 first_season: Только первый сезон
 latest_season: Только последний сезон
-added: Успешно добавлен: {title}!
+added: "Успешно добавлен: {title}!"
 unknown_error_adding: Произошла неожиданная ошибка при добавлении {kind}!
 removed_user: Успешно удален весь доступ для пользователя [{user}]!
 unknown_error_removing_user: Произошла неожиданная ошибка при удалении пользователя [{user}]!
