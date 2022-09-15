@@ -22,7 +22,7 @@ import radarr
 import sonarr
 import settings
 
-__version__ = "2.1.5"
+__version__ = "2.2"
 
 DBPATH = os.path.join(os.path.dirname(os.path.realpath(__file__)), "data")
 DBFILE = "searcharr.db"
@@ -63,6 +63,8 @@ class Searcharr(object):
         self.token = token
         logger.info(f"Searcharr v{__version__} - Logging started!")
         self._lang = self._load_language()
+        if self._lang.get("language_ietf") != "en-us":
+            self._lang_default = self._load_language("en-us")
         self.sonarr = (
             sonarr.Sonarr(settings.sonarr_url, settings.sonarr_api_key, args.verbose)
             if settings.sonarr_enabled
@@ -1731,35 +1733,36 @@ class Searcharr(object):
         con.commit()
         con.close()
 
-    def _load_language(self):
-        if not hasattr(settings, "searcharr_language"):
-            logger.warning(
-                "No language defined! Defaulting to en-us. Please add searcharr_language to settings.py if you want another language, where the value is a filename (without .yml) in the lang folder."
-            )
-            settings.searcharr_language = "en-us"
-        logger.debug(
-            f"Attempting to load language file: lang/{settings.searcharr_language}.yml..."
-        )
+    def _load_language(self, lang_ietf=None):
+        if not lang_ietf:
+            if not hasattr(settings, "searcharr_language"):
+                logger.warning(
+                    "No language defined! Defaulting to en-us. Please add searcharr_language to settings.py if you want another language, where the value is a filename (without .yml) in the lang folder."
+                )
+                settings.searcharr_language = "en-us"
+            lang_ietf = settings.searcharr_language
+        logger.debug(f"Attempting to load language file: lang/{lang_ietf}.yml...")
         try:
-            with open(
-                f"lang/{settings.searcharr_language}.yml", mode="r", encoding="utf-8"
-            ) as y:
+            with open(f"lang/{lang_ietf}.yml", mode="r", encoding="utf-8") as y:
                 lang = yaml.load(y, Loader=yaml.SafeLoader)
         except FileNotFoundError:
             logger.error(
-                f"Error loading lang/{settings.searcharr_language}.yml. Confirm searcharr_language in settings.py has a corresponding yml file in the lang subdirectory. Using default (English) language file."
+                f"Error loading lang/{lang_ietf}.yml. Confirm searcharr_language in settings.py has a corresponding yml file in the lang subdirectory. Using default (English) language file."
             )
             with open("lang/en-us.yml", "r") as y:
                 lang = yaml.load(y, Loader=yaml.SafeLoader)
         return lang
 
     def _xlate(self, key, **kwargs):
-        pass
         if t := self._lang.get(key):
             return t.format(**kwargs)
         else:
             logger.error(f"No translation found for key [{key}]!")
-            return "(translation not found)"
+            if self._lang.get("language_ietf") != "en-us":
+                if t := self._lang_default.get(key):
+                    logger.info(f"Using default language for key [{key}]...")
+                    return t.format(**kwargs)
+        return "(translation not found)"
 
     _bad_request_poster_error_messages = [
         "Wrong type of the web page content",
