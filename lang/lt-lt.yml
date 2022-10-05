@@ -1,0 +1,59 @@
+language_ietf: lt-lt
+language_label: Lietuvių
+
+movie: filmai
+series: serialai
+season: sezonas
+title: pavadinimas
+title_here: pavadinimas čia
+password: slaptažodis
+admin_password: administratoriaus slaptažodis
+admin_auth_success: Administratoriaus autorizacija sėkminga. Naudokite {commands} komandų sąrašui.
+already_authenticated: Jūs jau autorizavotės. Pabandykit {commands} kad sužinotumėte komandas.
+auth_successful: Autorizacija sėkminga. Naudokite {commands} komandų sąrašui.
+incorrect_pw: Neteisingas slaptažodis.
+auth_required: Jūs man nepažįstamas... Prašome autorizuotis su {commands} komanda.
+admin_auth_required: Jūs neturite administratoriaus teisių... Prašome autorizuotis su {commands} komanda.
+radarr_disabled: Atsiprašau, bet negalima ieškoti filmų.
+include_movie_title_in_cmd: Prašome kartu su komanda parašyti filmo pavadinimą, pvz. {commands}
+no_matching_movies: Atsiprašau, bet toks filmas nerastas.
+sonarr_disabled: Atsiprašau, bet negalima ieškoti serialų.
+include_series_title_in_cmd: Prašome kartu su komanda parašyti serialo pavadinimą, pvz. {commands}
+no_matching_series: Atsiprašau, bet toks serialas nerastas.
+no_users_found: Atsiprašau, bet vartotojas nerastas. Kreipkitės į administratorių...
+convo_not_found: Aš gavau komandą, bet negaliu jos įvykdyti. Prašau pabandykit iš naujo.
+search_canceled: Paieška atšaukta!
+no_root_folders: "Klaida {kind}: neaprašyta {app} šakninis aplankas! Patikrinkite Searcharr konfigūraciją ir bandykite dar kartą."
+no_quality_profiles: "Klaida {kind}: neaprašyti {app} kokybės profiliai! Patikrinkite Searcharr konfigūraciją ir bandykite dar kartą."
+all_seasons: Visus sezonus
+first_season: Tik pirmą sezoną
+latest_season: Tik paskutinį sezoną
+added: {title} sėkmingai įtrauktas!
+unknown_error_adding: Bandant įtraukti įvyko nežinoma klaida {kind}!
+removed_user: Vartotojas [{user}] sėkmingai pašalintas!
+unknown_error_removing_user: Bandant pašalinti [{user}] įvyko nežinoma klaida!
+added_admin_access: Vartotojui [{user}] suteiktos administratoriaus teisės!
+unknown_error_adding_admin: Įvyko nežinoma klaida bandant vartotojui [{user}] suteikti administratoriaus teises!
+removed_admin_access: Vartotojo [{user}] administratoriaus teisės sėkmingai pašalintos!
+unknown_error_removing_admin: bandant pašalinti vartotojo [{user}] administratoriaus teises įvyko nežinoma klaida!
+prev_button: < Ank.
+next_button: Sek. >
+add_tag_button: "Pridėti žymą: {tag}"
+finished_tagging_button: Žymėjimas baigtas
+monitor_button: Stebėti {option}
+add_quality_button: "Pridėti kokybę: {quality}"
+add_path_button: Įtraukti į {path}
+add_button: Pridėti {kind}!
+already_added_button: Pridėta!
+cancel_search_button: Atšaukti paiešką
+add_series_anime_button: Pridėti serialą kaip anime!
+unexpected_error: Kažkas nutiko!
+remove_user_button: Pašalinti
+make_admin_button: Sukurti administratorių
+remove_admin_button: Pašalinti administratorių
+done: Atlikta
+listing_users_pagination: Searcharr vartotojų sąrašas {page_info}.
+help_sonarr: Naudokite {series_commands} norėdami įtraukti serialą į Sonarr.
+help_radarr: naudokite {movie_commands} norėdami įtraukti filmą į Radarr.
+no_features: Atsiprašome, bet šiuo metu visos funkcijos išjungtos.
+admin_help: Kadangi esate administratorius, galite administruoti vartotojus komandų {commands} pagalba.
