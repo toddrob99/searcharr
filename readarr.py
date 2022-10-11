@@ -1,8 +1,8 @@
 """
 Searcharr
 Sonarr, Radarr & Readarr Telegram Bot
-Radarr API Wrapper
-By Todd Roberts
+Readarr API Wrapper
+By Ayman Bagabas
 https://github.com/toddrob99/searcharr
 """
 import requests
@@ -11,90 +11,93 @@ from urllib.parse import quote
 from log import set_up_logger
 
 
-class Radarr(object):
+class Readarr(object):
     def __init__(self, api_url, api_key, verbose=False):
-        self.logger = set_up_logger("searcharr.radarr", verbose, False)
+        self.logger = set_up_logger("searcharr.readarr", verbose, False)
         self.logger.debug("Logging started!")
         if api_url[-1] == "/":
             api_url = api_url[:-1]
         if api_url[:4] != "http":
             self.logger.error(
-                "Invalid Radarr URL detected. Please update your settings to include http:// or https:// on the beginning of the URL."
+                "Invalid Readarr URL detected. Please update your settings to include http:// or https:// on the beginning of the URL."
             )
-        self.radarr_version = self.discover_version(api_url, api_key)
-        if not self.radarr_version.startswith("0."):
-            self.api_url = api_url + "/api/v3/{endpoint}?apikey=" + api_key
+        self.readarr_version = self.discover_version(api_url, api_key)
+        if not self.readarr_version.startswith("0."):
+            self.api_url = api_url + "/api/v1/{endpoint}?apikey=" + api_key
         self._quality_profiles = self.get_all_quality_profiles()
+        self._metadata_profiles = self.get_all_metadata_profiles()
         self._root_folders = self.get_root_folders()
 
     def discover_version(self, api_url, api_key):
         try:
-            self.api_url = api_url + "/api/v3/{endpoint}?apikey=" + api_key
-            radarrInfo = self._api_get("system/status")
+            self.api_url = api_url + "/api/v1/{endpoint}?apikey=" + api_key
+            readarrInfo = self._api_get("system/status")
             self.logger.debug(
-                f"Discovered Radarr version {radarrInfo.get('version')}. Using v3 api."
+                f"Discovered Readarr version {readarrInfo.get('version')}. Using v1 api."
             )
-            return radarrInfo.get("version")
+            return readarrInfo.get("version")
         except requests.exceptions.HTTPError as e:
-            self.logger.debug(f"Radarr v3 API threw exception: {e}")
+            self.logger.debug(f"Readarr v1 API threw exception: {e}")
 
         try:
             self.api_url = api_url + "/api/{endpoint}?apikey=" + api_key
-            radarrInfo = self._api_get("system/status")
+            readarrInfo = self._api_get("system/status")
             self.logger.warning(
-                f"Discovered Radarr version {radarrInfo.get('version')}. Using legacy API. Consider upgrading to the latest version of Radarr for the best experience."
+                f"Discovered Readarr version {readarrInfo.get('version')}. Using legacy API. Consider upgrading to the latest version of Readarr for the best experience."
             )
-            return radarrInfo.get("version")
+            return readarrInfo.get("version")
         except requests.exceptions.HTTPError as e:
-            self.logger.debug(f"Radarr legacy API threw exception: {e}")
+            self.logger.debug(f"Readarr legacy API threw exception: {e}")
 
-        self.logger.debug("Failed to discover Radarr version")
+        self.logger.debug("Failed to discover Readarr version")
         return None
 
-    def lookup_movie(self, title=None, tmdb_id=None):
+    def lookup_book(self, title):
         r = self._api_get(
-            "movie/lookup", {"term": f"tmdb:{tmdb_id}" if tmdb_id else quote(title)}
+            "search", {"term":  quote(title)}
         )
         if not r:
             return []
 
         return [
             {
-                "title": x.get("title"),
-                "overview": x.get("overview", "No overview available."),
-                "status": x.get("status", "Unknown Status"),
-                "inCinemas": x.get("inCinemas"),
-                "remotePoster": x.get(
-                    "remotePoster",
+                "title": x.get("book").get("title"),
+                "authorId": x.get("book").get("authorId"),
+                "authorTitle": x.get("book").get("authorTitle"),
+                "seriesTitle": x.get("book").get("seriesTitle"),
+                "disambiguation": x.get("book").get("disambiguation"),
+                "overview": x.get("book").get("overview", "No overview available."),
+                "remotePoster": x.get("book").get(
+                    "remoteCover",
                     "https://artworks.thetvdb.com/banners/images/missing/movie.jpg",
                 ),
-                "year": x.get("year"),
-                "tmdbId": x.get("tmdbId"),
-                "imdbId": x.get("imdbId", None),
-                "runtime": x.get("runtime"),
-                "id": x.get("id"),
-                "titleSlug": x.get("titleSlug"),
-                "images": x.get("images"),
+                "releaseDate": x.get("book").get("releaseDate"),
+                "foreignBookId": x.get("book").get("foreignBookId"),
+                "id": x.get("book").get("id"),
+                "pageCount": x.get("book").get("pageCount"),
+                "titleSlug": x.get("book").get("titleSlug"),
+                "images": x.get("book").get("images"),
+                "links": x.get("book").get("links"),
+                "author": x.get("book").get("author"),
+                "editions": x.get("book").get("editions"),
             }
-            for x in r
+            for x in r if x.get("book")
         ]
 
-    def add_movie(
+    def add_book(
         self,
-        movie_info=None,
-        tmdb_id=None,
+        book_info=None,
         search=True,
         monitored=True,
-        min_avail="released",
         additional_data={},
     ):
-        if not movie_info and not tmdb_id:
+        if not book_info:
             return False
 
-        if not movie_info:
-            movie_info = self.lookup_movie(tmdb_id=tmdb_id)
-            if len(movie_info):
-                movie_info = movie_info[0]
+        if not book_info:
+            book_info = self.lookup_book(book_info['title'])
+            if len(book_info):
+                book_info = book_info[0]
             else:
                 return False
 
@@ -102,6 +105,7 @@ class Radarr(object):
 
         path = additional_data["p"]
         quality = int(additional_data["q"])
+        metadata = int(additional_data["m"])
         tags = additional_data.get("t", "")
         if len(tags):
             tag_ids = [int(x) for x in tags.split(",")]
@@ -109,23 +113,27 @@ class Radarr(object):
             tag_ids = []
 
         params = {
-            "tmdbId": movie_info["tmdbId"],
-            "title": movie_info["title"],
-            "year": movie_info["year"],
-            "qualityProfileId": quality,
-            "titleSlug": movie_info["titleSlug"],
-            "images": movie_info["images"],
-            "rootFolderPath": path,
+            "title": book_info["title"],
+            "releaseDate": book_info["releaseDate"],
+            "foreignBookId": book_info["foreignBookId"],
+            "titleSlug": book_info["titleSlug"],
             "monitored": monitored,
-            "minimumAvailability": min_avail,
-            "tags": tag_ids,
-            "addOptions": {"searchForMovie": search},
+            "anyEditionOk": True,
+            "addOptions": {"searchForNewBook": search},
+            "editions": book_info["editions"],
+            "author": {
+                "qualityProfileId": quality,
+                "metadataProfileId": metadata,
+                "foreignAuthorId": book_info["author"]["foreignAuthorId"],
+                "rootFolderPath": path,
+                "tags": tag_ids,
+            }
         }
 
-        return self._api_post("movie", params)
+        return self._api_post("book", params)
 
     def get_root_folders(self):
-        r = self._api_get("RootFolder", {})
+        r = self._api_get("rootfolder", {})
         if not r:
             return []
 
@@ -196,7 +204,7 @@ class Radarr(object):
             t = self.add_tag(tag)
             if not isinstance(t, dict):
                 self.logger.error(
-                    f"Wrong data type returned from Radarr API when attempting to add tag [{tag}]. Expected dict, got {type(t)}."
+                    f"Wrong data type returned from Readarr API when attempting to add tag [{tag}]. Expected dict, got {type(t)}."
                 )
                 return None
             else:
@@ -216,9 +224,19 @@ class Radarr(object):
 
     def get_all_quality_profiles(self):
         return (
-            self._api_get("profile", {})
-            if self.radarr_version.startswith("0.")
-            else self._api_get("qualityProfile", {})
+            self._api_get("qualityProfile", {})
+        ) or None
+
+    def lookup_metadata_profile(self, v):
+        # Look up metadata profile from a profile name or id
+        return next(
+            (x for x in self._metadata_profiles if str(v) in [x["name"], str(x["id"])]),
+            None,
+        )
+
+    def get_all_metadata_profiles(self):
+        return (
+            self._api_get("metadataprofile", {})
         ) or None
 
     def lookup_root_folder(self, v):
