@@ -4,6 +4,7 @@ language_label: English
 movie: movie
 series: series
 season: season
+book: book
 title: title
 title_here: title here
 password: password
@@ -59,3 +60,9 @@ help_sonarr: Use {series_commands} to add a series to Sonarr.
 help_radarr: Use {movie_commands} to add a movie to Radarr.
 no_features: Sorry, but all of my features are currently disabled.
 admin_help: Since you are an admin, you can also use {commands} to manage users.
+readarr_disabled: Sorry, but book support is disabled.
+include_book_title_in_cmd: Please include the book title in the command, e.g. {commands}
+no_matching_books: Sorry, but I didn't find any matching books.
+help_readarr: Use {book_commands} to add a book to Readarr.
+no_metadata_profiles: "Error adding {kind}: no metadata profiles enabled for {app}! Please check your Searcharr configuration and try again."
+add_metadata_button: "Add Metadata: {metadata}"

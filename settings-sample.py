@@ -1,6 +1,6 @@
 """
 Searcharr
-Sonarr & Radarr Telegram Bot
+Sonarr, Radarr & Readarr Telegram Bot
 By Todd Roberts
 https://github.com/toddrob99/searcharr
 """
@@ -46,3 +46,18 @@ radarr_user_selectable_tags = []  # e.g. ["custom-tag-1", "custom-tag-2"] - leav
 radarr_min_availability = "released"  # options: "announced", "inCinemas", "released"
 radarr_movie_command_aliases = ["movie"]  # e.g. ["movie", "mv", "m"]
 radarr_movie_paths = []  # e.g. ["/movies", "/other-movies"] - can be full path or id value - leave empty to enable all
+
+# Readarr
+readarr_enabled = True
+readarr_url = ""  # http://192.168.0.100:8787
+readarr_api_key = ""
+readarr_quality_profile_id = ["eBook", "Spoken"]  # can be name or id value - include multiple to allow the user to choose
+readarr_metadata_profile_id = ["Standard"]  # can be name or id value - include multiple to allow the user to choose
+readarr_add_monitored = True
+readarr_search_on_add = True
+readarr_tag_with_username = True
+readarr_forced_tags = []  # e.g. ["searcharr", "friends-and-family"] - leave empty for none
+readarr_allow_user_to_select_tags = True
+readarr_user_selectable_tags = []  # e.g. ["custom-tag-1", "custom-tag-2"] - leave empty to let user choose from all tags in Readarr
+readarr_book_command_aliases = ["book"]  # e.g. ["book", "bk", "b"]
+readarr_book_paths = []  # e.g. ["/books", "/other-books"] - can be full path or id value - leave empty to enable all

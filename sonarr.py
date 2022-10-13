@@ -1,6 +1,6 @@
 """
 Searcharr
-Sonarr & Radarr Telegram Bot
+Sonarr, Radarr & Readarr Telegram Bot
 Sonarr API Wrapper
 By Todd Roberts
 https://github.com/toddrob99/searcharr
