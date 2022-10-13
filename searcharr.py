@@ -300,6 +300,7 @@ class Searcharr(object):
                 else None
             )
         else:
+            settings.readarr_enabled = False
             self.readarr = None
             logger.warning(
                 "No readarr_enabled setting found. If you want Searcharr to support Readarr, please refer to the sample settings on github and add settings for Readarr to settings.py."
@@ -1799,15 +1800,17 @@ class Searcharr(object):
                 ]
             ),
         )
-        readarr_help = self._xlate(
-            "help_readarr",
-            book_commands=" OR ".join(
-                [
-                    f"`/{c} {self._xlate('title').title()}`"
-                    for c in settings.readarr_book_command_aliases
-                ]
-            ),
-        )
+        if self.readarr:
+            readarr_help = self._xlate(
+                "help_readarr",
+                book_commands=" OR ".join(
+                    [
+                        f"`/{c} {self._xlate('title').title()}`"
+                        for c in settings.readarr_book_command_aliases
+                    ]
+                ),
+            )
+
         if (
             settings.sonarr_enabled
             or settings.radarr_enabled
