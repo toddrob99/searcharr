@@ -1817,9 +1817,9 @@ class Searcharr(object):
             if settings.sonarr_enabled:
                 resp += f" {sonarr_help}"
             if settings.radarr_enabled:
-                resp = f" {radarr_help}"
+                resp += f" {radarr_help}"
             if settings.readarr_enabled:
-                resp = f" {readarr_help}"
+                resp += f" {readarr_help}"
         else:
             resp = self._xlate("no_features")
 
