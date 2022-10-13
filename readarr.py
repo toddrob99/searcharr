@@ -53,9 +53,7 @@ class Readarr(object):
         return None
 
     def lookup_book(self, title):
-        r = self._api_get(
-            "search", {"term":  quote(title)}
-        )
+        r = self._api_get("search", {"term": quote(title)})
         if not r:
             return []
 
@@ -81,7 +79,8 @@ class Readarr(object):
                 "author": x.get("book").get("author"),
                 "editions": x.get("book").get("editions"),
             }
-            for x in r if x.get("book")
+            for x in r
+            if x.get("book")
         ]
 
     def add_book(
@@ -95,7 +94,7 @@ class Readarr(object):
             return False
 
         if not book_info:
-            book_info = self.lookup_book(book_info['title'])
+            book_info = self.lookup_book(book_info["title"])
             if len(book_info):
                 book_info = book_info[0]
             else:
@@ -127,7 +126,7 @@ class Readarr(object):
                 "foreignAuthorId": book_info["author"]["foreignAuthorId"],
                 "rootFolderPath": path,
                 "tags": tag_ids,
-            }
+            },
         }
 
         return self._api_post("book", params)
@@ -164,18 +163,24 @@ class Readarr(object):
         self.logger.debug(f"Result of API call to get all tags: {r}")
         return [] if not r else r
 
-    def get_filtered_tags(self, allowed_tags):
+    def get_filtered_tags(self, allowed_tags, excluded_tags):
         r = self.get_all_tags()
         if not r:
             return []
         elif allowed_tags == []:
-            return [x for x in r if not x["label"].startswith("searcharr-")]
+            return [
+                x
+                for x in r
+                if not x["label"].startswith("searcharr-")
+                and not x["label"] in excluded_tags
+            ]
         else:
             return [
                 x
                 for x in r
                 if not x["label"].startswith("searcharr-")
                 and (x["label"] in allowed_tags or x["id"] in allowed_tags)
+                and x["label"] not in excluded_tags
             ]
 
     def add_tag(self, tag):
@@ -223,9 +228,7 @@ class Readarr(object):
         )
 
     def get_all_quality_profiles(self):
-        return (
-            self._api_get("qualityProfile", {})
-        ) or None
+        return (self._api_get("qualityProfile", {})) or None
 
     def lookup_metadata_profile(self, v):
         # Look up metadata profile from a profile name or id
@@ -235,9 +238,7 @@ class Readarr(object):
         )
 
     def get_all_metadata_profiles(self):
-        return (
-            self._api_get("metadataprofile", {})
-        ) or None
+        return (self._api_get("metadataprofile", {})) or None
 
     def lookup_root_folder(self, v):
         # Look up root folder from a path or id

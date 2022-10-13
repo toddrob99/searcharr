@@ -4,6 +4,7 @@ language_label: Romanian
 movie: film
 series: serial
 season: sezon
+book: carte
 title: titlu
 title_here: titlu aici
 password: parola
@@ -25,6 +26,7 @@ convo_not_found: Am primit comanda ta, dar nu recunosc conversația. Vă rugăm 
 search_canceled: Căutare anulată!
 no_root_folders: "Eroare la adăugare {kind}: nu sunt activate foldere rădăcină {app}! Verificați configurația Searcharr și încercați din nou."
 no_quality_profiles: "Eroare la adăugare {kind}: nu sunt activate profiluri de calitate pentru {app}! Verificați configurația Searcharr și încercați din nou."
+no_language_profiles: "Eroare la adăugare {kind}: nu sunt activate profiluri de limba pentru {app}! Verificați configurația Searcharr și încercați din nou."
 all_seasons: Toate sezoanele
 first_season: Doar primul sezon
 latest_season: Numai ultimul sezon
@@ -42,6 +44,7 @@ add_tag_button: "Adaugă etichetă: {tag}"
 finished_tagging_button: Etichetarea terminată
 monitor_button: Monitorizare {option}
 add_quality_button: "Adăugați calitate: {quality}"
+add_language_button: "Adăugați limba: {language}"
 add_path_button: Adaugă la {path}
 add_button: Adauga {kind}!
 already_added_button: Deja Adaugat!
@@ -57,3 +60,9 @@ help_sonarr: Foloseste {series_commands} pentru a adăuga un serial la Sonarr.
 help_radarr: Foloseste {movie_commands} pentru a adăuga un film la Radarr.
 no_features: Ne pare rău, dar toate funcțiile mele sunt dezactivate.
 admin_help: Deoarece sunteți administrator, puteți utiliza și {commands} pentru a gestiona utilizatorii.
+readarr_disabled: Scuze, dar suportul pentru carte este dezactivat.
+include_book_title_in_cmd: Vă rugăm să includeți titlul cartii în comandă, de exemplu {commands}
+no_matching_books: Îmi pare rău, dar nu am găsit niciun carte cu titlu acesta.
+help_readarr: Foloseste {book_commands} pentru a adăuga un carte la Readarr.
+no_metadata_profiles: "Eroare la adăugare {kind}: nu sunt activate profiluri de metadate pentru {app}! Verificați configurația Searcharr și încercați din nou."
+add_metadata_button: "Adăugați metadate: {metadata}"

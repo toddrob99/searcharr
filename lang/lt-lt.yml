@@ -4,6 +4,7 @@ language_label: Lietuvių
 movie: filmai
 series: serialai
 season: sezonas
+book: knyga
 title: pavadinimas
 title_here: pavadinimas čia
 password: slaptažodis
@@ -25,10 +26,11 @@ convo_not_found: Aš gavau komandą, bet negaliu jos įvykdyti. Prašau pabandyk
 search_canceled: Paieška atšaukta!
 no_root_folders: "Klaida {kind}: neaprašyta {app} šakninis aplankas! Patikrinkite Searcharr konfigūraciją ir bandykite dar kartą."
 no_quality_profiles: "Klaida {kind}: neaprašyti {app} kokybės profiliai! Patikrinkite Searcharr konfigūraciją ir bandykite dar kartą."
+no_language_profiles: "Klaida {kind}: neaprašyti {app} kalbos profiliai! Patikrinkite Searcharr konfigūraciją ir bandykite dar kartą."
 all_seasons: Visus sezonus
 first_season: Tik pirmą sezoną
 latest_season: Tik paskutinį sezoną
-added: {title} sėkmingai įtrauktas!
+added: "{title} sėkmingai įtrauktas!"
 unknown_error_adding: Bandant įtraukti įvyko nežinoma klaida {kind}!
 removed_user: Vartotojas [{user}] sėkmingai pašalintas!
 unknown_error_removing_user: Bandant pašalinti [{user}] įvyko nežinoma klaida!
@@ -42,6 +44,7 @@ add_tag_button: "Pridėti žymą: {tag}"
 finished_tagging_button: Žymėjimas baigtas
 monitor_button: Stebėti {option}
 add_quality_button: "Pridėti kokybę: {quality}"
+add_language_button: "Pridėti kalbą: {quality}"
 add_path_button: Įtraukti į {path}
 add_button: Pridėti {kind}!
 already_added_button: Pridėta!
@@ -54,6 +57,12 @@ remove_admin_button: Pašalinti administratorių
 done: Atlikta
 listing_users_pagination: Searcharr vartotojų sąrašas {page_info}.
 help_sonarr: Naudokite {series_commands} norėdami įtraukti serialą į Sonarr.
-help_radarr: naudokite {movie_commands} norėdami įtraukti filmą į Radarr.
+help_radarr: Naudokite {movie_commands} norėdami įtraukti filmą į Radarr.
 no_features: Atsiprašome, bet šiuo metu visos funkcijos išjungtos.
 admin_help: Kadangi esate administratorius, galite administruoti vartotojus komandų {commands} pagalba.
+readarr_disabled: Atsiprašau, bet negalima ieškoti knygų.
+include_book_title_in_cmd: Prašome kartu su komanda parašyti knyga pavadinimą, pvz. {commands}
+no_matching_books: Atsiprašau, bet toks knygos nerastas.
+help_readarr: Naudokite {book_commands} norėdami įtraukti knyga į Readarr.
+no_metadata_profiles: "Klaida {kind}: neaprašyti {app} metaduomenų profiliai! Patikrinkite Searcharr konfigūraciją ir bandykite dar kartą."
+add_metadata_button: "Metadata: {metadata}"

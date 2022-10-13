@@ -4,6 +4,7 @@ language_label: Brazilian Portuguese
 movie: filme
 series: séries
 season: temporada
+book: livro
 title: título
 title_here: título aqui
 password: senha
@@ -25,6 +26,7 @@ convo_not_found: Recebi seu comando, mas não reconheço a conversa. Por favor, 
 search_canceled: Pesquisa cancelada!
 no_root_folders: "Erro ao adicionar {kind}: nenhuma pasta raiz habilitada para {app}! Verifique a configuração do Searcharr e tente novamente."
 no_quality_profiles: "Erro ao adicionar {kind}: nenhum perfil de qualidade habilitado para {app}! Verifique a configuração do Searcharr e tente novamente."
+no_language_profiles: "Erro ao adicionar {kind}: nenhum perfil de idioma habilitado para {app}! Verifique a configuração do Searcharr e tente novamente."
 all_seasons: Todas temporadas
 first_season: Apenas a primeira temporada
 latest_season: Apenas a última temporada
@@ -42,6 +44,7 @@ add_tag_button: "Add Tag: {tag}"
 finished_tagging_button: Marcação concluída
 monitor_button: Monitorar {option}
 add_quality_button: "Add Qualidade: {quality}"
+add_language_button: "Add Idioma: {language}"
 add_path_button: Add para {path}
 add_button: Add {kind}!
 already_added_button: Já adicionado!
@@ -57,3 +60,9 @@ help_sonarr: Use {series_commands} para adicionar uma série ao Sonarr.
 help_radarr: Use {movie_commands} para adicionar um filme ao Radarr.
 no_features: Desculpe, mas todos os meus recursos estão desativados no momento.
 admin_help: Como você é um administrador, você também pode usar {commands} para gerenciar usuários.
+readarr_disabled: Desculpe, mas o suporte a filmes está desativado.
+include_book_title_in_cmd: Por favor, inclua o título do livro no comando, por exemplo. {commands}
+no_matching_books: Desculpe, mas não encontrei nenhum livro correspondente.
+help_readarr: Use {book_commands} para adicionar um livro ao Readarr.
+no_metadata_profiles: "Erro ao adicionar {kind}: nenhum perfil de metadados habilitado para {app}! Verifique a configuração do Searcharr e tente novamente."
+add_metadata_button: "Add Metadados: {metadata}"

@@ -156,18 +156,24 @@ class Radarr(object):
         self.logger.debug(f"Result of API call to get all tags: {r}")
         return [] if not r else r
 
-    def get_filtered_tags(self, allowed_tags):
+    def get_filtered_tags(self, allowed_tags, excluded_tags):
         r = self.get_all_tags()
         if not r:
             return []
         elif allowed_tags == []:
-            return [x for x in r if not x["label"].startswith("searcharr-")]
+            return [
+                x
+                for x in r
+                if not x["label"].startswith("searcharr-")
+                and not x["label"] in excluded_tags
+            ]
         else:
             return [
                 x
                 for x in r
                 if not x["label"].startswith("searcharr-")
                 and (x["label"] in allowed_tags or x["id"] in allowed_tags)
+                and x["label"] not in excluded_tags
             ]
 
     def add_tag(self, tag):

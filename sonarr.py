@@ -28,8 +28,7 @@ class Sonarr(object):
         self._root_folders = self.get_root_folders()
         self._all_series = {}
         self.get_all_series()
-        
-        
+
     def lookup_series(self, title=None, tvdb_id=None):
         r = self._api_get(
             "series/lookup", {"term": f"tvdb:{tvdb_id}" if tvdb_id else quote(title)}
@@ -172,18 +171,24 @@ class Sonarr(object):
         self.logger.debug(f"Result of API call to get all tags: {r}")
         return [] if not r else r
 
-    def get_filtered_tags(self, allowed_tags):
+    def get_filtered_tags(self, allowed_tags, excluded_tags):
         r = self.get_all_tags()
         if not r:
             return []
         elif allowed_tags == []:
-            return [x for x in r if not x["label"].startswith("searcharr-")]
+            return [
+                x
+                for x in r
+                if not x["label"].startswith("searcharr-")
+                and not x["label"] in excluded_tags
+            ]
         else:
             return [
                 x
                 for x in r
                 if not x["label"].startswith("searcharr-")
                 and (x["label"] in allowed_tags or x["id"] in allowed_tags)
+                and x["label"] not in excluded_tags
             ]
 
     def add_tag(self, tag):
@@ -231,7 +236,7 @@ class Sonarr(object):
         )
 
     def lookup_language_profile(self, v):
-    # Look up language profile from a profile name or id
+        # Look up language profile from a profile name or id
         return next(
             (x for x in self._language_profiles if str(v) in [x["name"], str(x["id"])]),
             None,

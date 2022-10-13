@@ -44,7 +44,7 @@ add_tag_button: "Add Tag: {tag}"
 finished_tagging_button: Finished Tagging
 monitor_button: Monitor {option}
 add_quality_button: "Add Quality: {quality}"
-select_language_button: "Select Language: {language}"
+add_language_button: "Add Language: {language}"
 add_path_button: Add to {path}
 add_button: Add {kind}!
 already_added_button: Already Added!

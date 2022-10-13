@@ -4,6 +4,7 @@ language_label: Français
 movie: film
 series: séries
 season: saison
+book: livre
 title: titre
 title_here: titre ici
 password: mot de passe
@@ -23,8 +24,9 @@ no_matching_series: Désolé, mais je n'ai pas trouvé de série correspondante.
 no_users_found: Désolé, mais je n'ai pas trouvé d'utilisateurs. Cela semble être une erreur...
 convo_not_found: J'ai reçu votre commande, mais je ne reconnais pas la conversation. Veuillez recommencer.
 search_canceled: Recherche annulée !
-no_root_folders: "Error adding {kind} : no root folders enabled for {app} ! Veuillez vérifier votre configuration Searcharr et réessayer."
-no_quality_profiles: "Error adding {kind} : no quality profiles enabled for {app} ! Veuillez vérifier votre configuration Searcharr et réessayer."
+no_root_folders: "Erreur lors de l'ajout {kind} : aucun dossier racine activé pour {app} ! Veuillez vérifier votre configuration Searcharr et réessayer."
+no_quality_profiles: "Erreur lors de l'ajout {kind} : aucun profil de qualité activé pour {app} ! Veuillez vérifier votre configuration Searcharr et réessayer."
+no_language_profiles: "Erreur lors de l'ajout {kind} : aucun profil de langue activé pour {app} ! Veuillez vérifier votre configuration Searcharr et réessayer."
 all_seasons: Toutes saisons
 first_season: Première saison
 latest_season: Dernière saison
@@ -42,6 +44,7 @@ add_tag_button: "Ajout Tag: {tag}"
 finished_tagging_button: Tag terminé
 monitor_button: Monitor {option}
 add_quality_button: "Qualité : {quality}"
+add_language_button: "Langue: {language}"
 add_path_button: Chemin {path}
 add_button: ajouter {kind}!
 already_added_button: Déjà téléchargé!
@@ -57,3 +60,9 @@ help_sonarr: Utilisez {series_commands} pour ajouter une série à Sonarr.
 help_radarr: Utilisez {movie_commands} pour ajouter un film à Radarr.
 no_features: Désolé, mais toutes mes fonctions sont actuellement désactivées.
 admin_help: Puisque vous êtes un administrateur, vous pouvez également utiliser les {commands} pour gérer les utilisateurs.
+readarr_disabled: Désolé, mais le support des livres est désactivé.
+include_book_title_in_cmd: "Veuillez inclure le titre du livre dans la commande, par exemple : {commands}"
+no_matching_books: Désolé, mais je n'ai pas trouvé de livres correspondants.
+help_readarr: Utilisez {book_commands} pour ajouter un livre à Readarr.
+no_metadata_profiles: "Erreur lors de l'ajout {kind} : aucun profil de metadata activé pour {app} ! Veuillez vérifier votre configuration Searcharr et réessayer."
+add_metadata_button: "Metadata: {metadata}"
