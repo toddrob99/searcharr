@@ -26,6 +26,7 @@ convo_not_found: I received your command, but I don't recognize the conversation
 search_canceled: Search canceled!
 no_root_folders: "Error adding {kind}: no root folders enabled for {app}! Please check your Searcharr configuration and try again."
 no_quality_profiles: "Error adding {kind}: no quality profiles enabled for {app}! Please check your Searcharr configuration and try again."
+no_language_profiles: "Error adding {kind}: no language profiles enabled for {app}! Please check your Searcharr configuration and try again."
 all_seasons: All Seasons
 first_season: First Season Only
 latest_season: Latest Season Only
@@ -43,6 +44,7 @@ add_tag_button: "Add Tag: {tag}"
 finished_tagging_button: Finished Tagging
 monitor_button: Monitor {option}
 add_quality_button: "Add Quality: {quality}"
+select_language_button: "Select Language: {language}"
 add_path_button: Add to {path}
 add_button: Add {kind}!
 already_added_button: Already Added!
