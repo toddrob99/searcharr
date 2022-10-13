@@ -1,6 +1,6 @@
 """
 Searcharr
-Sonarr & Radarr Telegram Bot
+Sonarr, Radarr & Readarr Telegram Bot
 By Todd Roberts
 https://github.com/toddrob99/searcharr
 """
@@ -12,6 +12,7 @@ import sqlite3
 from threading import Lock
 from urllib.parse import parse_qsl
 import uuid
+import arrow
 
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup, InputMediaPhoto
 from telegram.error import BadRequest
@@ -20,9 +21,10 @@ from telegram.ext import Updater, CommandHandler, CallbackQueryHandler
 from log import set_up_logger
 import radarr
 import sonarr
+import readarr
 import settings
 
-__version__ = "2.1.5"
+__version__ = "2.2"
 
 DBPATH = os.path.join(os.path.dirname(os.path.realpath(__file__)), "data")
 DBFILE = "searcharr.db"
@@ -63,6 +65,8 @@ class Searcharr(object):
         self.token = token
         logger.info(f"Searcharr v{__version__} - Logging started!")
         self._lang = self._load_language()
+        if self._lang.get("language_ietf") != "en-us":
+            self._lang_default = self._load_language("en-us")
         self.sonarr = (
             sonarr.Sonarr(settings.sonarr_url, settings.sonarr_api_key, args.verbose)
             if settings.sonarr_enabled
@@ -255,6 +259,123 @@ class Searcharr(object):
             for t in settings.radarr_forced_tags:
                 if t_id := self.radarr.get_tag_id(t):
                     logger.debug(f"Tag id [{t_id}] for forced Radarr tag [{t}]")
+        self.readarr = (
+            readarr.Readarr(settings.readarr_url, settings.readarr_api_key, args.verbose)
+            if settings.readarr_enabled
+            else None
+        )
+        if self.readarr:
+            quality_profiles = []
+            if not isinstance(settings.readarr_quality_profile_id, list):
+                settings.readarr_quality_profile_id = [
+                    settings.readarr_quality_profile_id
+                ]
+            for i in settings.readarr_quality_profile_id:
+                logger.debug(
+                    f"Looking up/validating readarr quality profile id for [{i}]..."
+                )
+                foundProfile = self.readarr.lookup_quality_profile(i)
+                if not foundProfile:
+                    logger.error(f"readarr quality profile id/name [{i}] is invalid!")
+                else:
+                    logger.debug(
+                        f"Found readarr quality profile for [{i}]: [{foundProfile}]"
+                    )
+                    quality_profiles.append(foundProfile)
+            if not len(quality_profiles):
+                logger.warning(
+                    f"No valid readarr quality profile(s) provided! Using all of the quality profiles I found in readarr: {self.readarr._quality_profiles}"
+                )
+            else:
+                logger.debug(
+                    f"Using the following readarr quality profile(s): {[(x['id'], x['name']) for x in quality_profiles]}"
+                )
+                self.readarr._quality_profiles = quality_profiles
+            metadata_profiles = []
+            if not isinstance(settings.readarr_metadata_profile_id, list):
+                settings.readarr_metadata_profile_id = [
+                    settings.readarr_metadata_profile_id
+                ]
+            for i in settings.readarr_metadata_profile_id:
+                logger.debug(
+                    f"Looking up/validating readarr metadata profile id for [{i}]..."
+                )
+                foundProfile = self.readarr.lookup_metadata_profile(i)
+                if not foundProfile:
+                    logger.error(f"readarr metadata profile id/name [{i}] is invalid!")
+                else:
+                    logger.debug(
+                        f"Found readarr metadata profile for [{i}]: [{foundProfile}]"
+                    )
+                    metadata_profiles.append(foundProfile)
+            if not len(metadata_profiles):
+                logger.warning(
+                    f"No valid readarr metadata profile(s) provided! Using all of the metadata profiles I found in readarr: {self.readarr._metadata_profiles}"
+                )
+            else:
+                logger.debug(
+                    f"Using the following readarr metadata profile(s): {[(x['id'], x['name']) for x in metadata_profiles]}"
+                )
+                self.readarr._metadata_profiles = metadata_profiles
+
+            root_folders = []
+            if not hasattr(settings, "readarr_book_paths"):
+                settings.readarr_book_paths = []
+                logger.warning(
+                    'No readarr_movie_paths setting detected. Please set one in settings.py (readarr_movie_paths=["/path/1", "/path/2"]). Proceeding with all root folders configured in readarr.'
+                )
+            if not isinstance(settings.readarr_book_paths, list):
+                settings.readarr_book_paths = [settings.readarr_book_paths]
+            for i in settings.readarr_book_paths:
+                logger.debug(f"Looking up/validating readarr root folder for [{i}]...")
+                foundPath = self.readarr.lookup_root_folder(i)
+                if not foundPath:
+                    logger.error(f"readarr root folder path/id [{i}] is invalid!")
+                else:
+                    logger.debug(f"Found readarr root folder for [{i}]: [{foundPath}]")
+                    root_folders.append(foundPath)
+            if not len(root_folders):
+                logger.warning(
+                    f"No valid readarr root folder(s) provided! Using all of the root folders I found in readarr: {self.readarr._root_folders}"
+                )
+            else:
+                logger.debug(
+                    f"Using the following readarr root folder(s): {[(x['id'], x['path']) for x in root_folders]}"
+                )
+                self.readarr._root_folders = root_folders
+            if not hasattr(settings, "readarr_tag_with_username"):
+                settings.readarr_tag_with_username = True
+                logger.warning(
+                    "No readarr_tag_with_username setting found. Please add readarr_tag_with_username to settings.py (readarr_tag_with_username=True or readarr_tag_with_username=False). Defaulting to True."
+                )
+            if not hasattr(settings, "readarr_movie_command_aliases"):
+                settings.readarr_book_command_aliases = ["book"]
+                logger.warning(
+                    'No readarr_book_command_aliases setting found. Please add readarr_movie_command_aliases to settings.py (e.g. readarr_book_command_aliases=["book", "bk"]. Defaulting to ["book"].'
+                )
+            if not hasattr(settings, "readarr_forced_tags"):
+                settings.readarr_forced_tags = []
+                logger.warning(
+                    'No readarr_forced_tags setting found. Please add readarr_forced_tags to settings.py (e.g. readarr_forced_tags=["tag-1", "tag-2"]) if you want specific tags added to each movie. Defaulting to empty list ([]).'
+                )
+            if not hasattr(settings, "readarr_allow_user_to_select_tags"):
+                settings.readarr_allow_user_to_select_tags = True
+                logger.warning(
+                    "No readarr_allow_user_to_select_tags setting found. Please add readarr_allow_user_to_select_tags to settings.py (e.g. readarr_allow_user_to_select_tags=False) if you do not want users to be able to select tags when adding a movie. Defaulting to True."
+                )
+            if not hasattr(settings, "readarr_user_selectable_tags"):
+                settings.readarr_user_selectable_tags = []
+                logger.warning(
+                    'No readarr_user_selectable_tags setting found. Please add readarr_user_selectable_tags to settings.py (e.g. readarr_user_selectable_tags=["tag-1", "tag-2"]) if you want to limit the tags a user can select. Defaulting to empty list ([]), which will present the user with all tags.'
+                )
+            for t in settings.readarr_user_selectable_tags:
+                if t_id := self.readarr.get_tag_id(t):
+                    logger.debug(
+                        f"Tag id [{t_id}] for user-selectable readarr tag [{t}]"
+                    )
+            for t in settings.readarr_forced_tags:
+                if t_id := self.readarr.get_tag_id(t):
+                    logger.debug(f"Tag id [{t_id}] for forced readarr tag [{t}]")
 
         self.conversations = {}
         if not hasattr(settings, "searcharr_admin_password"):
@@ -323,6 +444,77 @@ class Searcharr(object):
             )
         else:
             update.message.reply_text(self._xlate("incorrect_pw"))
+
+    def cmd_book(self, update, context):
+        logger.debug(f"Received book cmd from [{update.message.from_user.username}]")
+        if not self._authenticated(update.message.from_user.id):
+            update.message.reply_text(
+                self._xlate(
+                    "auth_required",
+                    commands=" OR ".join(
+                        [
+                            f"`/{c} <{self._xlate('password')}>`"
+                            for c in settings.searcharr_start_command_aliases
+                        ]
+                    ),
+                )
+            )
+            return
+        if not settings.radarr_enabled:
+            update.message.reply_text(self._xlate("readarr_disabled"))
+            return
+        title = self._strip_entities(update.message)
+        if not len(title):
+            x_title = self._xlate("title").title()
+            update.message.reply_text(
+                self._xlate(
+                    "include_book_title_in_cmd",
+                    commands=" OR ".join(
+                        [
+                            f"`/{c} {x_title}`"
+                            for c in settings.readarr_book_command_aliases
+                        ]
+                    ),
+                )
+            )
+            return
+        results = self.readarr.lookup_book(title)
+        cid = self._generate_cid()
+        # self.conversations.update({cid: {"cid": cid, "type": "book", "results": results}})
+        self._create_conversation(
+            id=cid,
+            username=str(update.message.from_user.username),
+            kind="book",
+            results=results,
+        )
+
+        if not len(results):
+            update.message.reply_text(self._xlate("no_matching_books"))
+        else:
+            r = results[0]
+            reply_message, reply_markup = self._prepare_response(
+                "book", r, cid, 0, len(results)
+            )
+            try:
+                context.bot.sendPhoto(
+                    chat_id=update.message.chat.id,
+                    photo=r["remotePoster"],
+                    caption=reply_message,
+                    reply_markup=reply_markup,
+                )
+            except BadRequest as e:
+                if str(e) in self._bad_request_poster_error_messages:
+                    logger.error(
+                        f"Error sending photo [{r['remotePoster']}]: BadRequest: {e}. Attempting to send with default poster..."
+                    )
+                    context.bot.sendPhoto(
+                        chat_id=update.message.chat.id,
+                        photo="https://artworks.thetvdb.com/banners/images/missing/movie.jpg",
+                        caption=reply_message,
+                        reply_markup=reply_markup,
+                    )
+                else:
+                    raise
 
     def cmd_movie(self, update, context):
         logger.debug(f"Received movie cmd from [{update.message.from_user.username}]")
@@ -577,7 +769,7 @@ class Searcharr(object):
             # self.conversations.pop(cid)
             query.message.delete()
         elif op == "prev":
-            if convo["type"] in ["series", "movie"]:
+            if convo["type"] in ["series", "movie", "book"]:
                 if i <= 0:
                     query.answer()
                     return
@@ -626,7 +818,7 @@ class Searcharr(object):
                     reply_markup=reply_markup,
                 )
         elif op == "next":
-            if convo["type"] in ["series", "movie"]:
+            if convo["type"] in ["series", "movie", "book"]:
                 if i >= len(convo["results"]):
                     query.answer()
                     return
@@ -685,6 +877,8 @@ class Searcharr(object):
                 if convo["type"] == "series"
                 else self.radarr._root_folders
                 if convo["type"] == "movie"
+                else self.readarr._root_folders
+                if convo["type"] == "book"
                 else []
             )
             if not additional_data.get("p"):
@@ -735,7 +929,7 @@ class Searcharr(object):
                         self._xlate(
                             "no_root_folders",
                             kind=self._xlate(convo["type"]),
-                            app="Sonarr" if convo["type"] == "series" else "Radarr",
+                            app="Sonarr" if convo["type"] == "series" else "Radarr" if convo['type'] == 'movie' else 'Readarr',
                         )
                     )
                     query.message.delete()
@@ -768,6 +962,8 @@ class Searcharr(object):
                     self.sonarr._quality_profiles
                     if convo["type"] == "series"
                     else self.radarr._quality_profiles
+                    if convo["type"] == "movie"
+                    else self.readarr._quality_profiles
                 )
                 if len(quality_profiles) > 1:
                     # prepare response to prompt user to select quality profile, and return
@@ -817,7 +1013,64 @@ class Searcharr(object):
                         self._xlate(
                             "no_quality_profiles",
                             kind=self._xlate(convo["type"]),
-                            app="Sonarr" if convo["type"] == "series" else "Radarr",
+                            app="Sonarr" if convo["type"] == "series" else "Radarr" if convo['type'] == 'movie' else 'Readarr',
+                        )
+                    )
+                    query.message.delete()
+                    query.answer()
+                    return
+
+            if convo['type'] == 'book' and not additional_data.get("m"):
+                metadata_profiles = self.readarr._metadata_profiles
+                if len(metadata_profiles) > 1:
+                    # prepare response to prompt user to select quality profile, and return
+                    reply_message, reply_markup = self._prepare_response(
+                        convo["type"],
+                        r,
+                        cid,
+                        i,
+                        len(convo["results"]),
+                        add=True,
+                        metadata_profiles=metadata_profiles,
+                    )
+                    try:
+                        query.message.edit_media(
+                            media=InputMediaPhoto(r["remotePoster"]),
+                            reply_markup=reply_markup,
+                        )
+                    except BadRequest as e:
+                        if str(e) in self._bad_request_poster_error_messages:
+                            logger.error(
+                                f"Error sending photo [{r['remotePoster']}]: BadRequest: {e}. Attempting to send with default poster..."
+                            )
+                            query.message.edit_media(
+                                media=InputMediaPhoto(
+                                    "https://artworks.thetvdb.com/banners/images/missing/movie.jpg"
+                                ),
+                                reply_markup=reply_markup,
+                            )
+                        else:
+                            raise
+                    query.bot.edit_message_caption(
+                        chat_id=query.message.chat_id,
+                        message_id=query.message.message_id,
+                        caption=reply_message,
+                        reply_markup=reply_markup,
+                    )
+                    query.answer()
+                    return
+                elif len(metadata_profiles) == 1:
+                    logger.debug(
+                        f"Only one metadata profile enabled. Adding/Updating additional data for cid=[{cid}], key=[m], value=[{metadata_profiles[0]['id']}]..."
+                    )
+                    self._update_add_data(cid, "m", metadata_profiles[0]["id"])
+                else:
+                    self._delete_conversation(cid)
+                    query.message.reply_text(
+                        self._xlate(
+                            "no_metadata_profiles",
+                            kind=self._xlate(convo["type"]),
+                            app="Sonarr" if convo["type"] == "series" else "Radarr" if convo['type'] == 'movie' else 'Readarr',
                         )
                     )
                     query.message.delete()
@@ -884,10 +1137,16 @@ class Searcharr(object):
                 )
                 allow_user_to_select_tags = settings.radarr_allow_user_to_select_tags
                 forced_tags = settings.radarr_forced_tags
+            elif convo["type"] == "book":
+                all_tags = self.readarr.get_filtered_tags(
+                    settings.readarr_user_selectable_tags
+                )
+                allow_user_to_select_tags = settings.readarr_allow_user_to_select_tags
+                forced_tags = settings.readarr_forced_tags
             if allow_user_to_select_tags and not additional_data.get("td"):
                 if not len(all_tags):
                     logger.warning(
-                        f"User tagging is enabled, but no tags found. Make sure there are tags in {'Sonarr' if convo['type'] == 'series' else 'Radarr'} matching your Searcharr configuration."
+                        f"User tagging is enabled, but no tags found. Make sure there are tags in {'Sonarr' if convo['type'] == 'series' else 'Radarr' if convo['type'] == 'movie' else 'Readarr'} matching your Searcharr configuration."
                     )
                 elif not additional_data.get("tt"):
                     reply_message, reply_markup = self._prepare_response(
@@ -948,6 +1207,9 @@ class Searcharr(object):
             elif convo["type"] == "movie":
                 get_tag_id = self.radarr.get_tag_id
                 tag_with_username = settings.radarr_tag_with_username
+            elif convo["type"] == "book":
+                get_tag_id = self.readarr.get_tag_id
+                tag_with_username = settings.readarr_tag_with_username
             if tag_with_username:
                 tag = f"searcharr-{query.from_user.username if query.from_user.username else query.from_user.id}"
                 if tag_id := get_tag_id(tag):
@@ -980,6 +1242,13 @@ class Searcharr(object):
                         monitored=settings.radarr_add_monitored,
                         search=settings.radarr_search_on_add,
                         min_avail=settings.radarr_min_availability,
+                        additional_data=self._get_add_data(cid),
+                    )
+                elif convo["type"] == "book":
+                    added = self.readarr.add_book(
+                        book_info=r,
+                        monitored=settings.readarr_add_monitored,
+                        search=settings.readarr_search_on_add,
                         additional_data=self._get_add_data(cid),
                     )
                 else:
@@ -1149,6 +1418,7 @@ class Searcharr(object):
         add=False,
         paths=None,
         quality_profiles=None,
+        metadata_profiles=None,
         monitor_options=None,
         tags=None,
     ):
@@ -1172,12 +1442,20 @@ class Searcharr(object):
                     "TMDB", url=f"https://www.themoviedb.org/movie/{r['tmdbId']}"
                 )
             )
-        if r["imdbId"]:
-            keyboardNavRow.append(
-                InlineKeyboardButton(
-                    "IMDb", url=f"https://imdb.com/title/{r['imdbId']}"
+        elif kind == "book" and r["links"]:
+            for link in r["links"]:
+                keyboardNavRow.append(
+                    InlineKeyboardButton(
+                        link["name"], url=link["url"]
+                    )
                 )
-            )
+        if kind == "series" or kind == "movie":
+            if r["imdbId"]:
+                keyboardNavRow.append(
+                    InlineKeyboardButton(
+                        "IMDb", url=f"https://imdb.com/title/{r['imdbId']}"
+                    )
+                )
         if total_results > 1 and i < total_results - 1:
             keyboardNavRow.append(
                 InlineKeyboardButton(
@@ -1222,6 +1500,16 @@ class Searcharr(object):
                             InlineKeyboardButton(
                                 self._xlate("add_quality_button", quality=q["name"]),
                                 callback_data=f"{cid}^^^{i}^^^add^^q={q['id']}",
+                            )
+                        ],
+                    )
+            elif metadata_profiles:
+                for m in metadata_profiles:
+                    keyboard.append(
+                        [
+                            InlineKeyboardButton(
+                                self._xlate("add_metadata_button", metadata=m["name"]),
+                                callback_data=f"{cid}^^^{i}^^^add^^m={m['id']}",
                             )
                         ],
                     )
@@ -1278,6 +1566,11 @@ class Searcharr(object):
             ]
         elif kind == "movie":
             reply_message = f"{r['title']}{' (' + str(r['year']) + ')' if r['year'] and str(r['year']) not in r['title'] else ''}{' - ' + str(r['runtime']) + ' min' if r['runtime'] else ''} - {r['status'].title()}\n\n{r['overview']}"[
+                0:1024
+            ]
+        elif kind == "book":
+            release = arrow.get(r["releaseDate"])
+            reply_message = f"{r['title']}{' - ' + r['disambiguation'] if r['disambiguation'] else ''}{' - ' + r['seriesTitle'] if r['seriesTitle'] else ''} ({release.format('MMMM DD, YYYY')})\n\n{r['overview']}"[
                 0:1024
             ]
         else:
@@ -1376,12 +1669,23 @@ class Searcharr(object):
                 ]
             ),
         )
-        if settings.sonarr_enabled and settings.radarr_enabled:
-            resp = f"{sonarr_help} {radarr_help}"
+        readarr_help = self._xlate(
+            "help_readarr",
+            book_commands=" OR ".join(
+                [
+                    f"`/{c} {self._xlate('title').title()}`"
+                    for c in settings.readarr_book_command_aliases
+                ]
+            ),
+        )
+        if settings.sonarr_enabled and settings.radarr_enabled and settings.readarr_enabled:
+            resp = f"{sonarr_help} {radarr_help} {readarr_help}"
         elif settings.sonarr_enabled:
             resp = sonarr_help
         elif settings.radarr_enabled:
             resp = radarr_help
+        elif settings.readarr_enabled:
+            resp = readarr_help
         else:
             resp = self._xlate("no_features")
 
@@ -1415,6 +1719,9 @@ class Searcharr(object):
         for c in settings.searcharr_start_command_aliases:
             logger.debug(f"Registering [/{c}] as a start command")
             updater.dispatcher.add_handler(CommandHandler(c, self.cmd_start))
+        for c in settings.readarr_book_command_aliases:
+            logger.debug(f"Registering [/{c}] as a book command")
+            updater.dispatcher.add_handler(CommandHandler(c, self.cmd_book))
         for c in settings.radarr_movie_command_aliases:
             logger.debug(f"Registering [/{c}] as a movie command")
             updater.dispatcher.add_handler(CommandHandler(c, self.cmd_movie))
@@ -1731,35 +2038,36 @@ class Searcharr(object):
         con.commit()
         con.close()
 
-    def _load_language(self):
-        if not hasattr(settings, "searcharr_language"):
-            logger.warning(
-                "No language defined! Defaulting to en-us. Please add searcharr_language to settings.py if you want another language, where the value is a filename (without .yml) in the lang folder."
-            )
-            settings.searcharr_language = "en-us"
-        logger.debug(
-            f"Attempting to load language file: lang/{settings.searcharr_language}.yml..."
-        )
+    def _load_language(self, lang_ietf=None):
+        if not lang_ietf:
+            if not hasattr(settings, "searcharr_language"):
+                logger.warning(
+                    "No language defined! Defaulting to en-us. Please add searcharr_language to settings.py if you want another language, where the value is a filename (without .yml) in the lang folder."
+                )
+                settings.searcharr_language = "en-us"
+            lang_ietf = settings.searcharr_language
+        logger.debug(f"Attempting to load language file: lang/{lang_ietf}.yml...")
         try:
-            with open(
-                f"lang/{settings.searcharr_language}.yml", mode="r", encoding="utf-8"
-            ) as y:
+            with open(f"lang/{lang_ietf}.yml", mode="r", encoding="utf-8") as y:
                 lang = yaml.load(y, Loader=yaml.SafeLoader)
         except FileNotFoundError:
             logger.error(
-                f"Error loading lang/{settings.searcharr_language}.yml. Confirm searcharr_language in settings.py has a corresponding yml file in the lang subdirectory. Using default (English) language file."
+                f"Error loading lang/{lang_ietf}.yml. Confirm searcharr_language in settings.py has a corresponding yml file in the lang subdirectory. Using default (English) language file."
             )
             with open("lang/en-us.yml", "r") as y:
                 lang = yaml.load(y, Loader=yaml.SafeLoader)
         return lang
 
     def _xlate(self, key, **kwargs):
-        pass
         if t := self._lang.get(key):
             return t.format(**kwargs)
         else:
             logger.error(f"No translation found for key [{key}]!")
-            return "(translation not found)"
+            if self._lang.get("language_ietf") != "en-us":
+                if t := self._lang_default.get(key):
+                    logger.info(f"Using default language for key [{key}]...")
+                    return t.format(**kwargs)
+        return "(translation not found)"
 
     _bad_request_poster_error_messages = [
         "Wrong type of the web page content",
