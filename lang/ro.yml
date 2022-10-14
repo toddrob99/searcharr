@@ -60,9 +60,9 @@ help_sonarr: Foloseste {series_commands} pentru a adăuga un serial la Sonarr.
 help_radarr: Foloseste {movie_commands} pentru a adăuga un film la Radarr.
 no_features: Ne pare rău, dar toate funcțiile mele sunt dezactivate.
 admin_help: Deoarece sunteți administrator, puteți utiliza și {commands} pentru a gestiona utilizatorii.
-readarr_disabled: Scuze, dar suportul pentru carte este dezactivat.
+readarr_disabled: Scuze, dar suportul pentru carti este dezactivat.
 include_book_title_in_cmd: Vă rugăm să includeți titlul cartii în comandă, de exemplu {commands}
-no_matching_books: Îmi pare rău, dar nu am găsit niciun carte cu titlu acesta.
+no_matching_books: Îmi pare rău, dar nu am găsit nici o carte cu titlu acesta.
 help_readarr: Foloseste {book_commands} pentru a adăuga un carte la Readarr.
 no_metadata_profiles: "Eroare la adăugare {kind}: nu sunt activate profiluri de metadate pentru {app}! Verificați configurația Searcharr și încercați din nou."
 add_metadata_button: "Adăugați metadate: {metadata}"
