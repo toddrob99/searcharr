@@ -129,7 +129,12 @@ class Readarr(object):
             },
         }
 
-        return self._api_post("book", params)
+        rsp = self._api_post("book", params)
+        if rsp is not None and search:
+            # Force book search
+            srsp = self._api_post("command", {"name": "BookSearch", "bookIds": [rsp.get("id")]})
+            self.logger.debug(f"Result of attempt to search book: {srsp}")
+        return rsp
 
     def get_root_folders(self):
         r = self._api_get("rootfolder", {})
