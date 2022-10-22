@@ -132,7 +132,9 @@ class Readarr(object):
         rsp = self._api_post("book", params)
         if rsp is not None and search:
             # Force book search
-            srsp = self._api_post("command", {"name": "BookSearch", "bookIds": [rsp.get("id")]})
+            srsp = self._api_post(
+                "command", {"name": "BookSearch", "bookIds": [rsp.get("id")]}
+            )
             self.logger.debug(f"Result of attempt to search book: {srsp}")
         return rsp
 
