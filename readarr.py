@@ -118,7 +118,9 @@ class Readarr(object):
             "titleSlug": book_info["titleSlug"],
             "monitored": monitored,
             "anyEditionOk": True,
-            "addOptions": {"searchForNewBook": search},
+            "addOptions": {
+                "searchForNewBook": False  # manually searching below instead
+            },
             "editions": book_info["editions"],
             "author": {
                 "qualityProfileId": quality,
