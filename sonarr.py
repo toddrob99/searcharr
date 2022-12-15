@@ -246,7 +246,7 @@ class Sonarr(object):
         return self._api_get("qualityprofile", {}) or None
 
     def get_all_language_profiles(self):
-        return self._api_get("v3/languageprofile", {}) or None
+        return self._api_get("languageprofile", {}) or None
 
     def lookup_root_folder(self, v):
         # Look up root folder from a path or id
