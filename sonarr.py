@@ -22,7 +22,7 @@ class Sonarr(object):
             self.logger.error(
                 "Invalid Sonarr URL detected. Please update your settings to include http:// or https:// on the beginning of the URL."
             )
-        self.api_url = api_url + "/api/{endpoint}?apikey=" + api_key
+        self.api_url = api_url + "/api/v3/{endpoint}?apikey=" + api_key
         self._quality_profiles = self.get_all_quality_profiles()
         self._language_profiles = self.get_all_language_profiles()
         self._root_folders = self.get_root_folders()
@@ -39,7 +39,7 @@ class Sonarr(object):
         return [
             {
                 "title": x.get("title"),
-                "seasonCount": x.get("seasonCount", 0),
+                "seasonCount": len(x.get("seasons")),
                 "status": x.get("status", "Unknown Status"),
                 "overview": x.get("overview", "Overview not available."),
                 "network": x.get("network"),
@@ -144,7 +144,7 @@ class Sonarr(object):
             "tags": tag_ids,
             "addOptions": {
                 "ignoreEpisodesWithFiles": unmonitor_existing,
-                "ignoreEpisodesWithoutFiles": "false",
+                "ignoreEpisodesWithoutFiles": False,
                 "searchForMissingEpisodes": search,
             },
         }
@@ -243,7 +243,7 @@ class Sonarr(object):
         )
 
     def get_all_quality_profiles(self):
-        return self._api_get("profile", {}) or None
+        return self._api_get("qualityprofile", {}) or None
 
     def get_all_language_profiles(self):
         return self._api_get("v3/languageprofile", {}) or None
