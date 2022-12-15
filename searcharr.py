@@ -100,38 +100,6 @@ class Searcharr(object):
                 )
                 self.sonarr._quality_profiles = quality_profiles
 
-            language_profiles = []
-            if not hasattr(settings, "sonarr_language_profile_id"):
-                settings.sonarr_language_profile_id = []
-                logger.warning(
-                    'No sonarr_language_profile_id setting detected. Please set one in settings.py if needed (e.g. sonarr_language_profile_id=["English", "German"]).'
-                )
-            if not isinstance(settings.sonarr_language_profile_id, list):
-                settings.sonarr_language_profile_id = [
-                    settings.sonarr_language_profile_id
-                ]
-            for i in settings.sonarr_language_profile_id:
-                logger.debug(
-                    f"Looking up/validating Sonarr language profile id for [{i}]..."
-                )
-                foundProfile = self.sonarr.lookup_language_profile(i)
-                if not foundProfile:
-                    logger.error(f"Sonarr language profile id/name [{i}] is invalid!")
-                else:
-                    logger.debug(
-                        f"Found Sonarr language profile for [{i}]: [{foundProfile}]"
-                    )
-                    language_profiles.append(foundProfile)
-            if not len(language_profiles):
-                logger.warning(
-                    f"No valid Sonarr language profile(s) provided! Using all of the language profiles I found in Sonarr: {self.sonarr._language_profiles}"
-                )
-            else:
-                logger.debug(
-                    f"Using the following Sonarr language profile(s): {[(x['id'], x['name']) for x in language_profiles]}"
-                )
-                self.sonarr._language_profiles = language_profiles
-
             root_folders = []
             if not hasattr(settings, "sonarr_series_paths"):
                 settings.sonarr_series_paths = []
@@ -1132,65 +1100,6 @@ class Searcharr(object):
                     query.answer()
                     return
 
-            if not additional_data.get("l"):
-                if convo["type"] == "series":
-                    language_profiles = self.sonarr._language_profiles
-
-                    if len(language_profiles) > 1:
-                        # prepare response to prompt user to select language profile, and return
-                        reply_message, reply_markup = self._prepare_response(
-                            convo["type"],
-                            r,
-                            cid,
-                            i,
-                            len(convo["results"]),
-                            add=True,
-                            language_profiles=language_profiles,
-                        )
-                        try:
-                            query.message.edit_media(
-                                media=InputMediaPhoto(r["remotePoster"]),
-                                reply_markup=reply_markup,
-                            )
-                        except BadRequest as e:
-                            if str(e) in self._bad_request_poster_error_messages:
-                                logger.error(
-                                    f"Error sending photo [{r['remotePoster']}]: BadRequest: {e}. Attempting to send with default poster..."
-                                )
-                                query.message.edit_media(
-                                    media=InputMediaPhoto(
-                                        "https://artworks.thetvdb.com/banners/images/missing/movie.jpg"
-                                    ),
-                                    reply_markup=reply_markup,
-                                )
-                            else:
-                                raise
-                        query.bot.edit_message_caption(
-                            chat_id=query.message.chat_id,
-                            message_id=query.message.message_id,
-                            caption=reply_message,
-                            reply_markup=reply_markup,
-                        )
-                        query.answer()
-                        return
-                    elif len(language_profiles) == 1:
-                        logger.debug(
-                            f"Only one language profile enabled. Adding/Updating additional data for cid=[{cid}], key=[q], value=[{language_profiles[0]['id']}]..."
-                        )
-                        self._update_add_data(cid, "l", language_profiles[0]["id"])
-                    else:
-                        self._delete_conversation(cid)
-                        query.message.reply_text(
-                            self._xlate(
-                                "no_language_profiles",
-                                kind=self._xlate(convo["type"]),
-                                app="Sonarr" if convo["type"] == "series" else "Radarr",
-                            )
-                        )
-                        query.message.delete()
-                        query.answer()
-                        return
-
             if (
                 convo["type"] == "series"
                 and settings.sonarr_season_monitor_prompt
@@ -1535,7 +1444,6 @@ class Searcharr(object):
         add=False,
         paths=None,
         quality_profiles=None,
-        language_profiles=None,
         metadata_profiles=None,
         monitor_options=None,
         tags=None,
@@ -1616,16 +1524,6 @@ class Searcharr(object):
                             InlineKeyboardButton(
                                 self._xlate("add_quality_button", quality=q["name"]),
                                 callback_data=f"{cid}^^^{i}^^^add^^q={q['id']}",
-                            )
-                        ],
-                    )
-            elif language_profiles:
-                for lp in language_profiles:
-                    keyboard.append(
-                        [
-                            InlineKeyboardButton(
-                                self._xlate("add_language_button", language=lp["name"]),
-                                callback_data=f"{cid}^^^{i}^^^add^^l={lp['id']}",
                             )
                         ],
                     )

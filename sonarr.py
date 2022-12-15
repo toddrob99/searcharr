@@ -24,7 +24,6 @@ class Sonarr(object):
             )
         self.api_url = api_url + "/api/v3/{endpoint}?apikey=" + api_key
         self._quality_profiles = self.get_all_quality_profiles()
-        self._language_profiles = self.get_all_language_profiles()
         self._root_folders = self.get_root_folders()
         self._all_series = {}
         self.get_all_series()
@@ -101,7 +100,6 @@ class Sonarr(object):
 
         path = additional_data["p"]
         quality = int(additional_data["q"])
-        language = int(additional_data["l"])
         monitor_options = int(additional_data.get("m", 0))
         if monitor_options == 1:
             # Monitor only the first season
@@ -132,7 +130,6 @@ class Sonarr(object):
             "tvdbId": series_info["tvdbId"],
             "title": series_info["title"],
             "qualityProfileId": quality,
-            "languageProfileId": language,
             "titleSlug": series_info["titleSlug"],
             "images": series_info["images"],
             "seasons": series_info["seasons"],
@@ -235,18 +232,8 @@ class Sonarr(object):
             None,
         )
 
-    def lookup_language_profile(self, v):
-        # Look up language profile from a profile name or id
-        return next(
-            (x for x in self._language_profiles if str(v) in [x["name"], str(x["id"])]),
-            None,
-        )
-
     def get_all_quality_profiles(self):
         return self._api_get("qualityprofile", {}) or None
-
-    def get_all_language_profiles(self):
-        return self._api_get("languageprofile", {}) or None
 
     def lookup_root_folder(self, v):
         # Look up root folder from a path or id
