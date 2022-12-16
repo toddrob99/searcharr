@@ -22,11 +22,37 @@ class Sonarr(object):
             self.logger.error(
                 "Invalid Sonarr URL detected. Please update your settings to include http:// or https:// on the beginning of the URL."
             )
-        self.api_url = api_url + "/api/v3/{endpoint}?apikey=" + api_key
+        self.sonarr_version = self.discover_version(api_url, api_key)
+        if not self.sonarr_version.startswith("4."):
+            self.api_url = api_url + "/api/{endpoint}?apikey=" + api_key
         self._quality_profiles = self.get_all_quality_profiles()
         self._root_folders = self.get_root_folders()
         self._all_series = {}
         self.get_all_series()
+
+    def discover_version(self, api_url, api_key):
+        try:
+            self.api_url = api_url + "/api/v3/{endpoint}?apikey=" + api_key
+            sonarrInfo = self._api_get("system/status")
+            self.logger.debug(
+                f"Discovered Sonarr version {sonarrInfo.get('version')} using v3 api."
+            )
+            return sonarrInfo.get("version")
+        except requests.exceptions.HTTPError as e:
+            self.logger.debug(f"Sonarr v3 API threw exception: {e}")
+
+        try:
+            self.api_url = api_url + "/api/{endpoint}?apikey=" + api_key
+            sonarrInfo = self._api_get("system/status")
+            self.logger.warning(
+                f"Discovered Sonarr version {sonarrInfo.get('version')}. Using legacy API. Consider upgrading to the latest version of Radarr for the best experience."
+            )
+            return sonarrInfo.get("version")
+        except requests.exceptions.HTTPError as e:
+            self.logger.debug(f"Sonarr legacy API threw exception: {e}")
+
+        self.logger.debug("Failed to discover Sonarr version")
+        return None
 
     def lookup_series(self, title=None, tvdb_id=None):
         r = self._api_get(
