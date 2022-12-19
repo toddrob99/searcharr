@@ -4,6 +4,7 @@ language_label: Español
 movie: película
 series: serie
 season: temporada
+book: libro
 title: título
 title_here: título aquí
 password: contraseña
@@ -25,6 +26,7 @@ convo_not_found: He recibido tu comando, pero no he reconocido la conversación.
 search_canceled: ¡Búsqueda cancelada!
 no_root_folders: "¡Error añadiendo {kind}: no se han encontrado carpetas raíz para {app}! Por favor, consulta tu configuración de Searcharr e inténtalo de nuevo."
 no_quality_profiles: "¡Error añadiendo {kind}: no se han encontrado perfiles de calidad activados para {app}! Por favor, consulta tu configuración de Searcharr e inténtalo de nuevo."
+no_language_profiles: "¡Error añadiendo {kind}: no se han encontrado perfiles de idioma activados para {app}! Por favor, consulta tu configuración de Searcharr e inténtalo de nuevo."
 all_seasons: Todas las Temporadas
 first_season: Sólo la Primera Temporada
 latest_season: Sólo la Última Temporada
@@ -42,6 +44,7 @@ add_tag_button: "Añadir Etiqueta: {tag}"
 finished_tagging_button: Etiquetado Finalizado
 monitor_button: Monitoraje {option}
 add_quality_button: "Añadir Calidad: {quality}"
+add_language_button: "Añadir Idioma: {language}"
 add_path_button: Añadir a {path}
 add_button: ¡Añadir {kind}!
 already_added_button: ¡Ya Añadido!
@@ -57,3 +60,9 @@ help_sonarr: Usa {series_commands} para añadir serie a Sonarr.
 help_radarr: Usa {movie_commands} para añadir película a Radarr.
 no_features: Lo siento, pero todas mis funciones están actualmente desactivadas.
 admin_help: Ya que eres administrador, también puedes usar {commands} para gestionar los usuarios.
+readarr_disabled: Lo siento, pero el soporte para libros está desativado.
+include_book_title_in_cmd: Por favor, incluye el título del libro en el comando, por ejemplo {commands}
+no_matching_books: Lo siento, no he encontrado ninguna libro que cumpla el criterio de búsqueda.
+help_readarr: Usa {book_commands} para añadir libro a Readarr.
+no_metadata_profiles: "¡Error añadiendo {kind}: no se han encontrado perfiles de metadata activados para {app}! Por favor, consulta tu configuración de Searcharr e inténtalo de nuevo."
+add_metadata_button: "Añadir Metadata: {metadata}"

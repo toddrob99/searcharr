@@ -1,6 +1,6 @@
 """
 Searcharr
-Sonarr & Radarr Telegram Bot
+Sonarr, Radarr & Readarr Telegram Bot
 Sonarr API Wrapper
 By Todd Roberts
 https://github.com/toddrob99/searcharr
@@ -22,11 +22,37 @@ class Sonarr(object):
             self.logger.error(
                 "Invalid Sonarr URL detected. Please update your settings to include http:// or https:// on the beginning of the URL."
             )
-        self.api_url = api_url + "/api/{endpoint}?apikey=" + api_key
+        self.sonarr_version = self.discover_version(api_url, api_key)
+        if not self.sonarr_version.startswith("4."):
+            self.api_url = api_url + "/api/{endpoint}?apikey=" + api_key
         self._quality_profiles = self.get_all_quality_profiles()
         self._root_folders = self.get_root_folders()
         self._all_series = {}
         self.get_all_series()
+
+    def discover_version(self, api_url, api_key):
+        try:
+            self.api_url = api_url + "/api/v3/{endpoint}?apikey=" + api_key
+            sonarrInfo = self._api_get("system/status")
+            self.logger.debug(
+                f"Discovered Sonarr version {sonarrInfo.get('version')} using v3 api."
+            )
+            return sonarrInfo.get("version")
+        except requests.exceptions.HTTPError as e:
+            self.logger.debug(f"Sonarr v3 API threw exception: {e}")
+
+        try:
+            self.api_url = api_url + "/api/{endpoint}?apikey=" + api_key
+            sonarrInfo = self._api_get("system/status")
+            self.logger.warning(
+                f"Discovered Sonarr version {sonarrInfo.get('version')}. Using legacy API. Consider upgrading to the latest version of Radarr for the best experience."
+            )
+            return sonarrInfo.get("version")
+        except requests.exceptions.HTTPError as e:
+            self.logger.debug(f"Sonarr legacy API threw exception: {e}")
+
+        self.logger.debug("Failed to discover Sonarr version")
+        return None
 
     def lookup_series(self, title=None, tvdb_id=None):
         r = self._api_get(
@@ -38,7 +64,7 @@ class Sonarr(object):
         return [
             {
                 "title": x.get("title"),
-                "seasonCount": x.get("seasonCount", 0),
+                "seasonCount": len(x.get("seasons")),
                 "status": x.get("status", "Unknown Status"),
                 "overview": x.get("overview", "Overview not available."),
                 "network": x.get("network"),
@@ -141,7 +167,7 @@ class Sonarr(object):
             "tags": tag_ids,
             "addOptions": {
                 "ignoreEpisodesWithFiles": unmonitor_existing,
-                "ignoreEpisodesWithoutFiles": "false",
+                "ignoreEpisodesWithoutFiles": False,
                 "searchForMissingEpisodes": search,
             },
         }
@@ -168,18 +194,24 @@ class Sonarr(object):
         self.logger.debug(f"Result of API call to get all tags: {r}")
         return [] if not r else r
 
-    def get_filtered_tags(self, allowed_tags):
+    def get_filtered_tags(self, allowed_tags, excluded_tags):
         r = self.get_all_tags()
         if not r:
             return []
         elif allowed_tags == []:
-            return [x for x in r if not x["label"].startswith("searcharr-")]
+            return [
+                x
+                for x in r
+                if not x["label"].startswith("searcharr-")
+                and not x["label"] in excluded_tags
+            ]
         else:
             return [
                 x
                 for x in r
                 if not x["label"].startswith("searcharr-")
                 and (x["label"] in allowed_tags or x["id"] in allowed_tags)
+                and x["label"] not in excluded_tags
             ]
 
     def add_tag(self, tag):
@@ -227,7 +259,7 @@ class Sonarr(object):
         )
 
     def get_all_quality_profiles(self):
-        return self._api_get("profile", {}) or None
+        return self._api_get("qualityprofile", {}) or None
 
     def lookup_root_folder(self, v):
         # Look up root folder from a path or id

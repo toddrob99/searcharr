@@ -4,7 +4,7 @@
 ### By Todd Roberts
 https://github.com/toddrob99/searcharr
 
-This bot allows users to add movies to Radarr and series to Sonarr via Telegram messaging app.
+This bot allows users to add movies to Radarr, series to Sonarr, and books to Readarr via Telegram messaging app.
 
 ## Setup & Run
 
@@ -20,6 +20,7 @@ You are required to update the following settings, at minimum:
 * Telegram Bot > Token (see [Telegram Bot Setup Instructions](https://core.telegram.org/bots#6-botfather))
 * Sonarr > URL, API Key, Quality Profile ID
 * Radarr > URL, API Key, Quality Profile ID
+* Readarr > URL, API Key, Quality Profile ID, Metadata Profile ID
 
 ### Docker & Docker-Compose
 
@@ -45,9 +46,9 @@ Send a private message to your bot saying `/start <password>` where `<password>`
 
 **Double Caution**: Do not authenticate as an admin in a group chat. Always use a private message with your bot.
 
-### Search & Add a Series to Sonarr or a Movie to Radarr
+### Search & Add a Series to Sonarr, a Movie to Radarr, or a Book to Readarr
 
-Send the bot a (private or group) message saying `/series <title>` or `/movie <title>` (replace with custom command aliases, as configured in `settings.py`). The bot will reply with information about the first result, along with buttons to move forward and back within the search results, pop out to tvdb, TMDB, or IMDb, add the current series/movie to Sonarr/Radarr, or cancel the search. When you click the button to add the series/movie to Sonarr/Radarr, the bot will ask what root folder to put the series/movie in, then what quality profile to use--unless you have only one root folder or quality profile enabled in Searcharr settings, in which case it will skip those steps and add the series/movie straight away.
+Send the bot a (private or group) message saying `/series <title>`, `/movie <title>`, or `/book <title>` (replace with custom command aliases, as configured in `settings.py`). The bot will reply with information about the first result, along with buttons to move forward and back within the search results, pop out to tvdb, TMDB, or IMDb, or Goodreads for books, add the current series/movie/book to Sonarr/Radarr/Readarr, or cancel the search. When you click the button to add the series/movie/book to Sonarr/Radarr/Readarr, the bot will ask what root folder to put the series/movie/book in, then what quality profile to use--unless you have only one root folder or quality profile enabled in Searcharr settings, in which case it will skip those steps and add the series/movie straight away.
 
 ### Manage Users
 

@@ -4,6 +4,7 @@ language_label: English
 movie: movie
 series: series
 season: season
+book: book
 title: title
 title_here: title here
 password: password
@@ -25,6 +26,7 @@ convo_not_found: I received your command, but I don't recognize the conversation
 search_canceled: Search canceled!
 no_root_folders: "Error adding {kind}: no root folders enabled for {app}! Please check your Searcharr configuration and try again."
 no_quality_profiles: "Error adding {kind}: no quality profiles enabled for {app}! Please check your Searcharr configuration and try again."
+no_language_profiles: "Error adding {kind}: no language profiles enabled for {app}! Please check your Searcharr configuration and try again."
 all_seasons: All Seasons
 first_season: First Season Only
 latest_season: Latest Season Only
@@ -42,6 +44,7 @@ add_tag_button: "Add Tag: {tag}"
 finished_tagging_button: Finished Tagging
 monitor_button: Monitor {option}
 add_quality_button: "Add Quality: {quality}"
+add_language_button: "Add Language: {language}"
 add_path_button: Add to {path}
 add_button: Add {kind}!
 already_added_button: Already Added!
@@ -57,3 +60,9 @@ help_sonarr: Use {series_commands} to add a series to Sonarr.
 help_radarr: Use {movie_commands} to add a movie to Radarr.
 no_features: Sorry, but all of my features are currently disabled.
 admin_help: Since you are an admin, you can also use {commands} to manage users.
+readarr_disabled: Sorry, but book support is disabled.
+include_book_title_in_cmd: Please include the book title in the command, e.g. {commands}
+no_matching_books: Sorry, but I didn't find any matching books.
+help_readarr: Use {book_commands} to add a book to Readarr.
+no_metadata_profiles: "Error adding {kind}: no metadata profiles enabled for {app}! Please check your Searcharr configuration and try again."
+add_metadata_button: "Add Metadata: {metadata}"
