@@ -24,7 +24,7 @@ import sonarr
 import readarr
 import settings
 
-__version__ = "3.0"
+__version__ = "3.1"
 
 DBPATH = os.path.join(os.path.dirname(os.path.realpath(__file__)), "data")
 DBFILE = "searcharr.db"
