@@ -7,7 +7,7 @@ on:
   workflow_dispatch: 
 
 env:
-  IMAGE: todrob/searcharr
+  IMAGE: toddrob/searcharr
 jobs:
   docker:
     runs-on: ubuntu-22.04
@@ -41,13 +41,13 @@ jobs:
           context: ./
           file: ./Dockerfile
           push: true
-          platforms: linux/amd64,linux/arm64,linux/arm/v7
-          tags: todrob/searcharr:beta
+          platforms: linux/amd64,linux/arm64,linux/arm/v7,linux/arm64/v8
+          tags: toddrob/searcharr:latest
   
       - name: Docker Hub Description
         uses: peter-evans/dockerhub-description@v3
         with:
          username: ${{ secrets.DOCKERHUB_USERNAME }}
          password: ${{ secrets.DOCKERHUB_TOKEN }}
-         repository: todrob/searcharr
+         repository: toddrob/searcharr
          short-description: ${{ github.event.repository.description }}

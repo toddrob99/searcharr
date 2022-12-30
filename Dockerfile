@@ -2,7 +2,7 @@ FROM python:slim
 
 LABEL org.opencontainers.image.source="https://github.com/toddrob99/searcharr"
 LABEL org.opencontainers.image.description="Docker for SEARCHARR"
-LABEL Name=Searcharr Version="v1.2-beta"
+LABEL Name=Searcharr Version="v1.2"
 
 ARG TARGETPLATFORM BUILDPLATFORM
 
