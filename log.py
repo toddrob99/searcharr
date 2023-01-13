@@ -6,6 +6,7 @@ By Todd Roberts
 https://github.com/toddrob99/searcharr
 """
 import logging
+from logging.handlers import TimedRotatingFileHandler
 import os
 
 
@@ -30,7 +31,7 @@ def set_up_logger(logger_name, verbose, console):
     logPath = os.path.join(os.path.dirname(os.path.realpath(__file__)), "logs")
     if not os.path.exists(logPath):
         os.makedirs(logPath)
-    fh = logging.handlers.TimedRotatingFileHandler(
+    fh = TimedRotatingFileHandler(
         os.path.join(logPath, fileName), when="midnight", interval=1, backupCount=7
     )
     fh.setFormatter(formatter)
