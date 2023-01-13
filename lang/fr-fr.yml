@@ -30,7 +30,7 @@ no_language_profiles: "Erreur lors de l'ajout {kind} : aucun profil de langue ac
 all_seasons: Toutes saisons
 first_season: Première saison
 latest_season: Dernière saison
-added: On a réussi à ajouter {titre} !
+added: On a réussi à ajouter {title} !
 unknown_error_adding: Une erreur non spécifiée a été rencontrée lors de l'ajout de {kind} !
 removed_user: Tous les accès de l'utilisateur ID [{user}] ont été supprimés avec succès !
 unknown_error_removing_user: Erreur non spécifiée rencontrée lors de la suppression de l'identifiant de l'utilisateur [{user}] !
