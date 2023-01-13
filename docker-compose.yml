@@ -2,7 +2,7 @@ version: '3.0'
 services:
   searcharr:
     container_name: searcharr
-    image: toddrob/searcharr:latest
+    build: .
     volumes:
       - ./data:/app/data
       - ./logs:/app/logs
