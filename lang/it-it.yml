@@ -1,0 +1,68 @@
+language_ietf: it-it
+language_label: Italian
+
+movie: film
+series: serie
+season: stagione
+book: libro
+title: titolo
+title_here: titolo qui
+password: password
+admin_password: password amministratore
+admin_auth_success: Autenticato come admin. Usare {commands} per i comandi.
+already_authenticated: Già autenticato. Prova {commands} per info di utilizzo.
+auth_successful: Autenticazione avvenuta. Usare {commands} per i comandi.
+incorrect_pw: Password errata.
+auth_required: Non credo di conoscerti... Per favore, autenticarsi con {commands} e riprovare.
+admin_auth_required: Non hai i permessi di amministratore... Per favore, autenticarsi con {commands} e riprovare.
+radarr_disabled: Mi dispiace, ma il supporto ai film è disabilitato.
+include_movie_title_in_cmd: Per favore includere il titolo del film nel comando (es. {commands})
+no_matching_movies: Nessun film corrispondente trovato.
+sonarr_disabled: Mi dispiace, ma il supporto alle serie è disabilitato.
+include_series_title_in_cmd: Per favore includere il titolo della serie nel comando (es. {commands})
+no_matching_series: Nessuna serie corrispondente trovato.
+no_users_found: Errore, nessun utente trovato
+convo_not_found: Comando ricevuto, ma non riesco a riconoscere la conversazione. Per favore, ricominciare.
+search_canceled: Ricerca annullata!
+no_root_folders: "Errore durante aggiunta {kind}: nessuna cartella di root abilitata per {app}! Verificare la configurazione di Searcharr e provare di nuovo."
+no_quality_profiles: "Errore durante aggiunta {kind}: nessun profilo di qualità abilitato per {app}! Verificare la configurazione di Searcharr e provare di nuovo."
+no_language_profiles: "Errore durante aggiunta {kind}: nessun profilo di lingua abilitato per {app}! Verificare la configurazione di Searcharr e provare di nuovo."
+all_seasons: Tutte le stagioni
+first_season: Solo prima stagione
+latest_season: Solo ultima stagione
+added: Inserito con successo {title}!
+unknown_error_adding: Errore sconosciuto durante l'aggiunta di {kind}!
+removed_user: Rimossi con successo tutti gli accessi per l'utente con id [{user}]!
+unknown_error_removing_user: Errore sconosciuto durante la rimozione dell'utente con id [{user}]!
+added_admin_access: Attivato accesso amministratore per l'utente [{user}]!
+unknown_error_adding_admin: Errore sconosciuto durante l'aggiunta dei permessi amministrativi per l'utente con id [{user}]!
+removed_admin_access: Rimossi permessi amministrativi per l'utente [{user}]!
+unknown_error_removing_admin: Errore sconosciuto durante la rimozione dei permessi amministrativi per l'utente con id [{user}]!
+prev_button: < Prec
+next_button: Succ >
+add_tag_button: "Aggiungi Tag: {tag}"
+finished_tagging_button: Tag Completato
+monitor_button: Monitor {option}
+add_quality_button: "Aggiungi Qualità: {quality}"
+add_language_button: "Aggiungi Lingua: {language}"
+add_path_button: Aggiungi a {path}
+add_button: Aggiungi {kind}!
+already_added_button: Già Presente!
+cancel_search_button: Annulla Ricerca
+add_series_anime_button: Aggiungi Serie come Anime!
+unexpected_error: Qualcosa è andato storto!
+remove_user_button: Rimuovi
+make_admin_button: Crea Amministratore
+remove_admin_button: Rimuovi Amministratore
+done: Fatto
+listing_users_pagination: Elenco utenti Searcharr {page_info}.
+help_sonarr: Usa {series_commands} per aggiungere una serie a Sonarr.
+help_radarr: Usa {movie_commands} per aggiungere un film a Radarr.
+no_features: Tutte le funzionalità sono attualmente disabilitate.
+admin_help: Essendo un amministratore, puoi anche usare i comandi {commands} per gestire gli utenti.
+readarr_disabled: Mi dispiace, ma il supporto ai libri è disabilitato.
+include_book_title_in_cmd: Per favore includere il titolo del libro nel comando (es. {commands})
+no_matching_books: Nessun libro corrispondente trovato.
+help_readarr: Usa {book_commands} per aggiungere un libro a Readarr.
+no_metadata_profiles: "Errore durante aggiunta {kind}: nessun profilo metadata abilitato per {app}! Verificare la configurazione di Searcharr e provare di nuovo."
+add_metadata_button: "Aggiungi Metadata: {metadata}"
