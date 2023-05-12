@@ -64,5 +64,5 @@ readarr_disabled: 书籍支持已禁用
 include_book_title_in_cmd: 请在命令中包含书名，例如 {commands}。
 no_matching_books: 未找到匹配的书籍。
 help_readarr: 使用 {book_commands} 将书籍添加到 Readarr。
-no_metadata_profiles: "添加 {kind} 时出错：没有为 {app} 启用元数据配置文件！请检查您的 Searcharr 配置并重试。”
+no_metadata_profiles: "添加 {kind} 时出错：没有为 {app} 启用元数据配置文件！请检查您的 Searcharr 配置并重试。"
 add_metadata_button: "添加元数据： {metadata}"
