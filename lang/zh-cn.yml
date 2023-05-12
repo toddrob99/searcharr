@@ -1,0 +1,68 @@
+language_ietf: zh-cn
+language_label: 简体中文
+
+movie: 电影
+series: 电视剧
+season: 季
+book: 书籍
+title: 标题
+title_here: 标题在这里
+password: 密码
+admin_password: 管理员密码
+admin_auth_success: 管理员身份验证成功。 使用 {commands} 命令。
+already_authenticated: 身份已验证。 尝试使用 {commands} 获取使用信息。
+auth_successful: 认证成功。使用 {commands} 命令。
+incorrect_pw: 密码错误。
+auth_required: 未认证，请使用 {commands} 进行身份验证，再重试。
+admin_auth_required: 非管理员，请使用 {commands} 进行身份验证，再重试。
+radarr_disabled: 电影支持已禁用。
+include_movie_title_in_cmd: 请在命令中包含电影名称，例如 {commands}。
+no_matching_movies: 未找到匹配的电影。
+sonarr_disabled: 电视剧支持已禁用。
+include_series_title_in_cmd: 请在命令中包含电视剧标题，例如 {commands}。
+no_matching_series: 未找到匹配的电视剧。
+no_users_found: 未找到用户。
+convo_not_found: 我收到了你的命令，但我不认识对话。请重新开始。
+search_canceled: 搜索已取消！
+no_root_folders: "添加 {kind} 时出错：没有为 {app} 启用根文件夹！请检查您的 Searcharr 配置并重试。"
+no_quality_profiles: "添加 {kind} 时出错：没有为 {app} 启用质量配置文件！请检查您的 Searcharr 配置并重试。"
+no_language_profiles: "添加 {kind} 时出错：没有为 {app} 启用语言配置文件！请检查您的 Searcharr 配置并重试。"
+all_seasons: 所有季
+first_season: 仅第一季
+latest_season: 仅最新一季
+added: {title} 添加成功!
+unknown_error_adding: 添加 {kind} 时遇到未知错误！
+removed_user: 已成功删除用户 ID [{user}] 的所有访问权限！
+unknown_error_removing_user: 删除用户 ID [{user}] 时遇到未知错误！
+added_admin_access: 已添加用户 ID [{user}] 为管理员！
+unknown_error_adding_admin: 添加用户 ID [{user}] 为管理员时遇到未知错误！
+removed_admin_access: 移除用户 ID [{user}] 的管理员权限！
+unknown_error_removing_admin: 移除用户 ID [{user}] 的管理员权限时遇到未知错误！
+prev_button: < 上一项
+next_button: 下一项 >
+add_tag_button: "添加 Tag: {tag}"
+finished_tagging_button: 完成 Tagging
+monitor_button: Monitor {option}
+add_quality_button: "添加质量: {quality}"
+add_language_button: "添加语言: {language}"
+add_path_button: 添加 {path}
+add_button: 添加 {kind}!
+already_added_button: 已经添加！
+cancel_search_button: 取消搜索
+add_series_anime_button: 添加为动画!
+unexpected_error: 出了些问题！
+remove_user_button: 移除
+make_admin_button: 设为管理员
+remove_admin_button: 删除管理员
+done: 完成
+listing_users_pagination: 列出 Searcharr 用户 {page_info}。
+help_sonarr: 使用 {series_commands} 将电视剧添加到 Sonarr。
+help_radarr: 使用 {movie_commands} 将电影添加到 Radarr。
+no_features: 所有功能已被禁用。
+admin_help: 管理员：使用 {commands} 来管理用户。
+readarr_disabled: 书籍支持已禁用
+include_book_title_in_cmd: 请在命令中包含书名，例如 {commands}。
+no_matching_books: 未找到匹配的书籍。
+help_readarr: 使用 {book_commands} 将书籍添加到 Readarr。
+no_metadata_profiles: "添加 {kind} 时出错：没有为 {app} 启用元数据配置文件！请检查您的 Searcharr 配置并重试。”
+add_metadata_button: "添加元数据： {metadata}"
