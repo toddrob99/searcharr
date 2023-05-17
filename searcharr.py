@@ -24,7 +24,7 @@ import sonarr
 import readarr
 import settings
 
-__version__ = "3.2.1"
+__version__ = "3.2.2"
 
 DBPATH = os.path.join(os.path.dirname(os.path.realpath(__file__)), "data")
 DBFILE = "searcharr.db"
@@ -357,7 +357,7 @@ class Searcharr(object):
                 logger.warning(
                     "No readarr_tag_with_username setting found. Please add readarr_tag_with_username to settings.py (readarr_tag_with_username=True or readarr_tag_with_username=False). Defaulting to True."
                 )
-            if not hasattr(settings, "readarr_movie_command_aliases"):
+            if not hasattr(settings, "readarr_book_command_aliases"):
                 settings.readarr_book_command_aliases = ["book"]
                 logger.warning(
                     'No readarr_book_command_aliases setting found. Please add readarr_book_command_aliases to settings.py (e.g. readarr_book_command_aliases=["book", "bk"]. Defaulting to ["book"].'
