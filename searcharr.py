@@ -30,7 +30,6 @@ DBPATH = os.path.join(os.path.dirname(os.path.realpath(__file__)), "data")
 DBFILE = "searcharr.db"
 DBLOCK = Lock()
 
-
 def parse_args():
     parser = argparse.ArgumentParser(
         prog="Searcharr", description="Start the Searcharr Bot."
@@ -414,6 +413,11 @@ class Searcharr(object):
 
     def cmd_start(self, update, context):
         logger.debug(f"Received start cmd from [{update.message.from_user.username}]")
+        if update.message.chat.type == "supergroup" and self._authenticated(update.message.chat.id):
+            self._add_user(
+                id=update.message.from_user.id,
+                username=str(update.message.from_user.username)
+            )
         password = self._strip_entities(update.message)
         if password and password == settings.searcharr_admin_password:
             self._add_user(
@@ -1774,6 +1778,10 @@ class Searcharr(object):
             logger.info(
                 "Developer mode is enabled; skipping registration of error handler--exceptions will be raised."
             )
+
+        for chat_id in settings.auth_bypass_list.split(","):
+            logger.debug(f"Adding chat_id [{chat_id}] to auth bypass list")
+            self._add_user(id=int(chat_id), username="")
 
         updater.start_polling()
         updater.idle()

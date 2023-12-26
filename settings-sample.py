@@ -16,6 +16,9 @@ searcharr_users_command_aliases = ["users"]  # Override /users command
 # Telegram
 tgram_token = ""
 
+ # Comma separated list of user ids that can bypass non-admin authentication
+auth_bypass_list = ""
+
 # Sonarr
 sonarr_enabled = True
 sonarr_url = ""  # http://192.168.0.100:8989
