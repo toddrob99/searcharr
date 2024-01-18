@@ -10,8 +10,9 @@ class Series(Command):
     def _action(self, update, context):
         self._search_collection(
             update=update, 
+            context=context, 
             kind="series", 
             plural="series", 
-            search_function = self.searcharr.sonarr.lookup_series, 
-            command_aliases = settings.sonarr_series_command_aliases
+            search_function=self.searcharr.sonarr.lookup_series, 
+            command_aliases=settings.sonarr_series_command_aliases
         )

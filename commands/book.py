@@ -10,6 +10,7 @@ class Book(Command):
     def _action(self, update, context):
         self._search_collection(
             update=update, 
+            context=context,
             kind="book", 
             plural="book", 
             search_function=self.searcharr.readarr.lookup_book, 

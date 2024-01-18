@@ -8,7 +8,7 @@ class NavButtons(object):
             xlate("prev_button"), callback_data=f"{cid}^^^{i}^^^prev"
         )
 
-    def next(self, cid, i, total_results):
+    def next(self, cid, i):
         return InlineKeyboardButton(
             xlate("next_button"), callback_data=f"{cid}^^^{i}^^^next"
         )
@@ -41,10 +41,10 @@ class ExternalButtons(object):
 
 class ActionButtons(object):
     def add(self, kind, cid, i):
-        InlineKeyboardButton(
+        return InlineKeyboardButton(
             xlate("add_button", kind=xlate(kind).title()),
             callback_data=f"{cid}^^^{i}^^^add",
-        ),
+        )
 
     def already_added(self, cid, i):
         return InlineKeyboardButton(

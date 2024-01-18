@@ -7,7 +7,6 @@ https://github.com/toddrob99/searcharr
 import argparse
 import json
 import os
-import yaml
 import sqlite3
 from threading import Lock
 from urllib.parse import parse_qsl
@@ -24,7 +23,7 @@ import sonarr
 import readarr
 import settings
 import util
-from util import xlate
+from util import xlate, xlate_aliases
 from commands import Command
 from buttons import KeyboardButtons
 
@@ -422,15 +421,7 @@ class Searcharr(object):
         auth_level = self._authenticated(query.from_user.id)
         if not auth_level:
             query.message.reply_text(
-                xlate(
-                    "auth_required",
-                    commands=" OR ".join(
-                        [
-                            f"`/{c} <{xlate('password')}>`"
-                            for c in settings.searcharr_start_command_aliases
-                        ]
-                    ),
-                )
+                xlate_aliases("auth_required", settings.searcharr_start_command_aliases, "password")
             )
             query.message.delete()
             query.answer()
@@ -1160,7 +1151,7 @@ class Searcharr(object):
             )
         if total_results > 1 and i < total_results - 1:
             keyboardNavRow.append(
-                buttons.nav.next(cid, i, total_results)
+                buttons.nav.next(cid, i)
             )
         keyboard.append(keyboardNavRow)
 
@@ -1198,14 +1189,14 @@ class Searcharr(object):
         if not add:
             if not r["id"]:
                 keyboardActRow.append(
-                    buttons.act.add(cid, i)
+                    buttons.act.add(kind, cid, i)
                 )
             else:
                 keyboardActRow.append(
-                    buttons.act.already_added(i)
+                    buttons.act.already_added(cid, i)
                 )
         keyboardActRow.append(
-            buttons.act.cancel(i)
+            buttons.act.cancel(cid, i)
         )
         if len(keyboardActRow):
             keyboard.append(keyboardActRow)
