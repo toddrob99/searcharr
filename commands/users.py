@@ -1,5 +1,6 @@
 from commands import Command
 import settings
+from util import xlate, xlate_aliases
 
 
 class Users(Command):
@@ -10,7 +11,7 @@ class Users(Command):
     def _action(self, update, context):
         if self.auth_level != 2:
             update.message.reply_text(
-                self._xlate_aliases("admin_auth_required", settings.searcharr_start_command_aliases, "admin_password")
+                xlate_aliases("admin_auth_required", settings.searcharr_start_command_aliases, "admin_password")
             )
             return
 
@@ -24,13 +25,12 @@ class Users(Command):
         )
 
         if not len(results):
-            update.message.reply_text(self._xlate("no_users_found"))
+            update.message.reply_text(xlate("no_users_found"))
         else:
             reply_message, reply_markup = self.searcharr._prepare_response_users(
                 cid,
                 results,
                 0,
-                5,
                 len(results),
             )
             context.bot.sendMessage(
