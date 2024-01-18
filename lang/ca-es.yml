@@ -56,13 +56,13 @@ make_admin_button: Fer Administrador
 remove_admin_button: Eliminar Administrador
 done: Fet
 listing_users_pagination: Enumerant usuaris de Searcharr {page_info}.
-help_sonarr: Utilitza {series_commands} per afegir una sèrie a Sonarr.
-help_radarr: Utilitza {movie_commands} per afegir una pel·lícula a Radarr.
+help_sonarr: Utilitza {commands} per afegir una sèrie a Sonarr.
+help_radarr: Utilitza {commands} per afegir una pel·lícula a Radarr.
 no_features: Ho sento, però totes les meves funcions estàn desactivades temporalment.
 admin_help: Com que ets administrador, també pots utilitzar {commands} per gestionar els usuaris.
 readarr_disabled: Ho sento, però el suport per llibres està desactivat.
 include_book_title_in_cmd: Sisplau, inclou el títol del llibre en la ordre, per exemple {commands}
 no_matching_books: Ho sento, però no he trobat cap llibre que compleixi el criteri de cerca.
-help_readarr: Utilitza {book_commands} per afegir una llibre a Readarr.
+help_readarr: Utilitza {commands} per afegir una llibre a Readarr.
 no_metadata_profiles: "Error afegint {kind}: no hi han perfils de metadata activats per {app}! Sisplau, comprova la teva configuració de Searcharr i torna a intentar-ho."
 add_metadata_button: "Afegir Metadata: {metadata}"

@@ -56,8 +56,8 @@ make_admin_button: rendre admin
 remove_admin_button: retirer l'admin
 done: Terminé
 listing_users_pagination: Liste des utilisateurs de Searcharr {page_info}.
-help_sonarr: Utilisez {series_commands} pour ajouter une série à Sonarr.
-help_radarr: Utilisez {movie_commands} pour ajouter un film à Radarr.
+help_sonarr: Utilisez {commands} pour ajouter une série à Sonarr.
+help_radarr: Utilisez {commands} pour ajouter un film à Radarr.
 no_features: Désolé, mais toutes mes fonctions sont actuellement désactivées.
 admin_help: Puisque vous êtes un administrateur, vous pouvez également utiliser les {commands} pour gérer les utilisateurs.
 readarr_disabled: Désolé, mais le support des livres est désactivé.

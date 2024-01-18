@@ -56,13 +56,13 @@ make_admin_button: Tornar Admin
 remove_admin_button: Remover Admin
 done: feito
 listing_users_pagination: Listando usuários do Searcharr {page_info}.
-help_sonarr: Use {series_commands} para adicionar uma série ao Sonarr.
-help_radarr: Use {movie_commands} para adicionar um filme ao Radarr.
+help_sonarr: Use {commands} para adicionar uma série ao Sonarr.
+help_radarr: Use {commands} para adicionar um filme ao Radarr.
 no_features: Desculpe, mas todos os meus recursos estão desativados no momento.
 admin_help: Como você é um administrador, você também pode usar {commands} para gerenciar usuários.
 readarr_disabled: Desculpe, mas o suporte a filmes está desativado.
 include_book_title_in_cmd: Por favor, inclua o título do livro no comando, por exemplo. {commands}
 no_matching_books: Desculpe, mas não encontrei nenhum livro correspondente.
-help_readarr: Use {book_commands} para adicionar um livro ao Readarr.
+help_readarr: Use {commands} para adicionar um livro ao Readarr.
 no_metadata_profiles: "Erro ao adicionar {kind}: nenhum perfil de metadados habilitado para {app}! Verifique a configuração do Searcharr e tente novamente."
 add_metadata_button: "Add Metadados: {metadata}"

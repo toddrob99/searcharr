@@ -56,13 +56,13 @@ make_admin_button: 设为管理员
 remove_admin_button: 删除管理员
 done: 完成
 listing_users_pagination: 列出 Searcharr 用户 {page_info}。
-help_sonarr: 使用 {series_commands} 将电视剧添加到 Sonarr。
-help_radarr: 使用 {movie_commands} 将电影添加到 Radarr。
+help_sonarr: 使用 {commands} 将电视剧添加到 Sonarr。
+help_radarr: 使用 {commands} 将电影添加到 Radarr。
 no_features: 所有功能已被禁用。
 admin_help: 管理员：使用 {commands} 来管理用户。
 readarr_disabled: 书籍支持已禁用
 include_book_title_in_cmd: 请在命令中包含书名，例如 {commands}。
 no_matching_books: 未找到匹配的书籍。
-help_readarr: 使用 {book_commands} 将书籍添加到 Readarr。
+help_readarr: 使用 {commands} 将书籍添加到 Readarr。
 no_metadata_profiles: "添加 {kind} 时出错：没有为 {app} 启用元数据配置文件！请检查您的 Searcharr 配置并重试。"
 add_metadata_button: "添加元数据： {metadata}"
