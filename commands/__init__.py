@@ -1,13 +1,12 @@
-import os
-import sys
-from importlib import util as import_util
-sys.path.append(os.path.dirname(os.path.dirname(os.path.realpath(__file__))))
-from telegram.error import BadRequest
-import traceback
-
-import settings
 import util
+import settings
+import traceback
+import sys
+import os
+from importlib import util as import_util
+from telegram.error import BadRequest
 from util import xlate, xlate_aliases
+sys.path.append(os.path.dirname(os.path.dirname(os.path.realpath(__file__))))
 
 
 class Command:
@@ -72,7 +71,7 @@ class Command:
 
     def _action(self, update, context):
         pass
-    
+
     def _search_collection(self, update, context, kind, plural, search_function, command_aliases):
         title = util.strip_entities(update.message)
 
@@ -85,10 +84,10 @@ class Command:
         results = search_function(title)
         cid = self.searcharr._generate_cid()
         self.searcharr._create_conversation(
-            id = cid,
-            username = str(update.message.from_user.username),
-            kind = kind,
-            results = results,
+            id=cid,
+            username=str(update.message.from_user.username),
+            kind=kind,
+            results=results,
         )
 
         if not len(results):
@@ -127,6 +126,7 @@ def load_module(path):
     module = import_util.module_from_spec(spec)
     spec.loader.exec_module(module)
     return module
+
 
 path = os.path.abspath(__file__)
 dirpath = os.path.dirname(path)

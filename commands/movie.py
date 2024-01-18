@@ -10,9 +10,9 @@ class Movie(Command):
     def _action(self, update, context):
         self._search_collection(
             update=update,
-            context=context, 
-            kind="movie", 
-            plural="movies", 
-            search_function=self.searcharr.radarr.lookup_movie, 
+            context=context,
+            kind="movie",
+            plural="movies",
+            search_function=self.searcharr.radarr.lookup_movie,
             command_aliases=settings.radarr_movie_command_aliases
         )

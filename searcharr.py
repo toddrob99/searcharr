@@ -498,7 +498,7 @@ class Searcharr(object):
                 reply_message, reply_markup = self._prepare_response_users(
                     cid,
                     convo["results"],
-                    i-1,
+                    i - 1,
                     len(convo["results"]),
                 )
                 context.bot.edit_message_text(
@@ -542,13 +542,13 @@ class Searcharr(object):
                     reply_markup=reply_markup,
                 )
             elif convo["type"] == "users":
-                #if i >= len(convo["results"])/5:
+                # if i >= len(convo["results"])/5:
                 #    query.answer()
                 #    return
                 reply_message, reply_markup = self._prepare_response_users(
                     cid,
                     convo["results"],
-                    i+1,
+                    i + 1,
                     len(convo["results"]),
                 )
                 context.bot.edit_message_text(
@@ -1232,7 +1232,7 @@ class Searcharr(object):
     def _prepare_response_users(self, cid, users, i, total_results):
         buttons = KeyboardButtons()
         keyboard = []
-        for u in users[i*5 : (i*5)+5]:
+        for u in users[i * 5 : (i * 5) + 5]:
             keyboard.append(
                 [
                     buttons.user.remove(u, cid),
@@ -1248,7 +1248,7 @@ class Searcharr(object):
         keyboardNavRow.append(
             buttons.nav.done(cid, i)
         )
-        if total_results/5 > 1 and (i+1)*5 < total_results:
+        if total_results / 5 > 1 and (i + 1) * 5 < total_results:
             keyboardNavRow.append(
                 buttons.nav.next(cid, i)
             )
@@ -1257,7 +1257,7 @@ class Searcharr(object):
 
         reply_message = xlate(
             "listing_users_pagination",
-            page_info=f"{i*5+1}-{min((i+1)*5, total_results)} of {total_results}",
+            page_info=f"{i * 5 + 1}-{min((i + 1) * 5, total_results)} of {total_results}",
         )
         return (reply_message, reply_markup)
 
