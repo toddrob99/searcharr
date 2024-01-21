@@ -1237,7 +1237,7 @@ class Searcharr(object):
                 get_tag_id = self.readarr.get_tag_id
                 tag_with_username = settings.readarr_tag_with_username
             if tag_with_username:
-                tag = f"searcharr-{query.from_user.username if query.from_user.username else query.from_user.id}"
+                tag = f"searcharr-{query.from_user.username if query.from_user.username else query.from_user.id}-{query.message.chat_id}"
                 if tag_id := get_tag_id(tag):
                     tags.append(str(tag_id))
                 else:
