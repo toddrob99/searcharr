@@ -66,7 +66,8 @@ def prepare_response(
                 "TMDB", url=f"https://www.themoviedb.org/movie/{r['tmdbId']}"
             )
         )
-    # Add IMDb links for movies and series
+    # Add IMDb links for movies and series (sport results carry alias ids,
+    # not real TVDB/IMDb entries, so no external links for them)
     if kind in ["series", "movie"]:
         if r["imdbId"]:
             keyboardNavRow.append(
@@ -189,6 +190,10 @@ def prepare_response(
     # Create message text based on content type
     if kind == "series":
         reply_message = f"{r['title']}{' (' + str(r['year']) + ')' if r['year'] and str(r['year']) not in r['title'] else ''} - {r['seasonCount']} Season{'s' if r['seasonCount'] != 1 else ''}{' - ' + r['network'] if r['network'] else ''} - {r['status'].title()}\n\n{r['overview']}"[
+            0:1024
+        ]
+    elif kind == "sport":
+        reply_message = f"{r['title']}{' (' + str(r['year']) + ')' if r['year'] and str(r['year']) not in r['title'] else ''} - {r['seasonCount']} Season{'s' if r['seasonCount'] != 1 else ''} - {r['status'].title()}\n\n{r['overview']}"[
             0:1024
         ]
     elif kind == "movie":

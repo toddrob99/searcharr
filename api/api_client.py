@@ -109,6 +109,9 @@ class ApiClient(object):
             if self.version and self.version.startswith("4."):
                 return f"{api_url}/api/v3/{{endpoint}}?apikey={api_key}"
             return f"{api_url}/api/{{endpoint}}?apikey={api_key}"
+        elif self.service_name == "sportarr":
+            # Sportarr has always exposed the v3-compatible surface.
+            return f"{api_url}/api/v3/{{endpoint}}?apikey={api_key}"
         elif self.service_name == "radarr":
             if self.version and not self.version.startswith("0."):
                 return f"{api_url}/api/v3/{{endpoint}}?apikey={api_key}"

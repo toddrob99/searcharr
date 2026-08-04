@@ -11,6 +11,7 @@ import settings
 from bot.commands.start import start_command
 from bot.commands.help import help_command
 from bot.commands.series import series_command
+from bot.commands.sport import sport_command
 from bot.commands.movie import movie_command
 from bot.commands.users import users_command
 
@@ -46,6 +47,14 @@ def register_commands(application, bot):
                 CommandHandler(cmd, lambda update, context: series_command(update, context, bot))
             )
     
+    # Register sport commands if sportarr is enabled
+    if bot.sportarr:
+        for cmd in settings.sportarr_sport_command_aliases:
+            logger.debug(f"Registering [/{cmd}] as a sport command")
+            application.add_handler(
+                CommandHandler(cmd, lambda update, context: sport_command(update, context, bot))
+            )
+
     # Register movie commands if radarr is enabled
     if bot.radarr:
         for cmd in settings.radarr_movie_command_aliases:

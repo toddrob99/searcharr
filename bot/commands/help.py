@@ -56,6 +56,20 @@ async def help_command(update, context, bot):
             )
         )
     
+    # Sportarr help
+    if settings.sportarr_enabled:
+        help_text.append(
+            translate(
+                "help_sportarr",
+                sport_commands=" OR ".join(
+                    [
+                        f"`/{c} {translate('title').title()}`"
+                        for c in settings.sportarr_sport_command_aliases
+                    ]
+                ),
+            )
+        )
+
     # Radarr help
     if settings.radarr_enabled:
         help_text.append(

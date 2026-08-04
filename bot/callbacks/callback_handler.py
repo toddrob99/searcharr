@@ -10,6 +10,7 @@ from bot.utils.log import set_up_logger
 
 # Import service-specific callback handlers
 from bot.callbacks.sonarr_callbacks import handle_sonarr_callback
+from bot.callbacks.sportarr_callbacks import handle_sportarr_callback
 from bot.callbacks.radarr_callbacks import handle_radarr_callback
 from bot.callbacks.user_callbacks import handle_user_callback
 
@@ -59,6 +60,8 @@ def main_callback_handler(bot):
         try:
             if convo["type"] == "series":
                 await handle_sonarr_callback(update, context, bot, convo, cid, i, op, op_flags)
+            elif convo["type"] == "sport":
+                await handle_sportarr_callback(update, context, bot, convo, cid, i, op, op_flags)
             elif convo["type"] == "movie":
                 await handle_radarr_callback(update, context, bot, convo, cid, i, op, op_flags)
             elif convo["type"] == "users":
