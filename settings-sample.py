@@ -31,6 +31,21 @@ sonarr_series_command_aliases = ["series"]  # e.g. ["series", "tv", "t"]
 sonarr_series_paths = []  # e.g. ["/tv", "/anime"] - can be full path or id value - leave empty to enable all
 sonarr_season_monitor_prompt = False  # False - always monitor all seasons; True - prompt user to select from All, First, or Latest season(s)
 
+# Sportarr
+sportarr_enabled = False
+sportarr_url = ""  # http://192.168.0.100:1867
+sportarr_api_key = ""
+sportarr_quality_profile_id = ["HD - 720p/1080p"]  # can be name or id value - include multiple to allow the user to choose
+sportarr_add_monitored = True
+sportarr_search_on_add = True
+sportarr_tag_with_username = True
+sportarr_forced_tags = []  # e.g. ["searcharr", "friends-and-family"] - leave empty for none
+sportarr_allow_user_to_select_tags = True
+sportarr_user_selectable_tags = []  # e.g. ["custom-tag-1", "custom-tag-2"] - leave empty to let user choose from all tags in Sportarr
+sportarr_sport_command_aliases = ["sport"]  # e.g. ["sport", "league", "sp"]
+sportarr_series_paths = []  # e.g. ["/sports"] - can be full path or id value - leave empty to enable all
+sportarr_season_monitor_prompt = False  # False - always monitor all seasons; True - prompt user to select from All, First, or Latest season(s)
+
 # Radarr
 radarr_enabled = True
 radarr_url = ""  # http://192.168.0.100:7878

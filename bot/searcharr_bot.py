@@ -8,6 +8,7 @@ https://github.com/toddrob99/searcharr
 from telegram.ext import ApplicationBuilder, CallbackQueryHandler
 
 from api.sonarr import Sonarr
+from api.sportarr import Sportarr
 from api.radarr import Radarr
 from bot.utils.log import set_up_logger
 from bot.utils.database import init_db
@@ -41,6 +42,7 @@ class SearcharrBot:
         
         # Initialize service clients
         self.sonarr = self._init_service("sonarr", verbose)
+        self.sportarr = self._init_service("sportarr", verbose)
         self.radarr = self._init_service("radarr", verbose)
         
         # Check and validate settings
@@ -78,6 +80,11 @@ class SearcharrBot:
                 client = Sonarr(settings.sonarr_url, settings.sonarr_api_key, verbose)
                 return configure_sonarr(client)
             
+            elif service_name == "sportarr":
+                from bot.services.sportarr_service import configure_sportarr
+                client = Sportarr(settings.sportarr_url, settings.sportarr_api_key, verbose)
+                return configure_sportarr(client)
+
             elif service_name == "radarr":
                 from bot.services.radarr_service import configure_radarr
                 client = Radarr(settings.radarr_url, settings.radarr_api_key, verbose)

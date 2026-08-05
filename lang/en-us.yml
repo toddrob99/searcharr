@@ -59,3 +59,8 @@ help_sonarr: Use {series_commands} to add a series to Sonarr.
 help_radarr: Use {movie_commands} to add a movie to Radarr.
 no_features: Sorry, but all of my features are currently disabled.
 admin_help: Since you are an admin, you can also use {commands} to manage users.
+sport: league
+sportarr_disabled: Sorry, but sports support is disabled.
+include_sport_title_in_cmd: Please include the league name in the command, e.g. {commands}
+no_matching_sport: Sorry, but I didn't find any matching leagues.
+help_sportarr: Use {sport_commands} to add a sports league to Sportarr.
