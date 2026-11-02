@@ -80,9 +80,13 @@ async def users_command(update, context, bot):
         len(users),
     )
     
-    # Send the user management message
+    # Keep the response in the originating forum topic.
+    message_thread_id = (
+        update.message.message_thread_id if update.message.is_topic_message else None
+    )
     await context.bot.sendMessage(
         chat_id=update.message.chat.id,
+        message_thread_id=message_thread_id,
         text=reply_message,
         reply_markup=reply_markup,
     )
