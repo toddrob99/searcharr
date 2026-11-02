@@ -106,7 +106,9 @@ class ApiClient(object):
             str: Formatted API URL string with endpoint placeholder
         """
         if self.service_name == "sonarr":
-            if self.version and self.version.startswith("4."):
+            # Sonarr 4 and later use API v3, independently of the app version.
+            major_version = self.version.split(".", 1)[0] if self.version else ""
+            if major_version.isdigit() and int(major_version) >= 4:
                 return f"{api_url}/api/v3/{{endpoint}}?apikey={api_key}"
             return f"{api_url}/api/{{endpoint}}?apikey={api_key}"
         elif self.service_name == "radarr":

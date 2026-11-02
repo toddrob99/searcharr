@@ -90,10 +90,14 @@ async def movie_command(update, context, bot):
         "movie", r, cid, 0, len(results)
     )
     
-    # Send response with photo
+    # Keep the response in the originating forum topic.
+    message_thread_id = (
+        update.message.message_thread_id if update.message.is_topic_message else None
+    )
     try:
         await context.bot.sendPhoto(
             chat_id=update.message.chat.id,
+            message_thread_id=message_thread_id,
             photo=r["remotePoster"],
             caption=reply_message,
             reply_markup=reply_markup,
@@ -109,6 +113,7 @@ async def movie_command(update, context, bot):
             )
             await context.bot.sendPhoto(
                 chat_id=update.message.chat.id,
+                message_thread_id=message_thread_id,
                 photo="https://artworks.thetvdb.com/banners/images/missing/movie.jpg",
                 caption=reply_message,
                 reply_markup=reply_markup,

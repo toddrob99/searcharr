@@ -6,9 +6,12 @@ By Todd Roberts
 https://github.com/toddrob99/searcharr
 """
 # Settings must be loaded first (registers in sys.modules)
-from config.settings_loader import load_settings
+from config.settings_loader import ConfigurationError, load_settings
 
-load_settings()
+try:
+    load_settings()
+except ConfigurationError as error:
+    raise SystemExit(f"Configuration error: {error}") from None
 
 # Now safe to import modules that use `import settings`
 import argparse
@@ -18,7 +21,7 @@ from bot.searcharr_bot import SearcharrBot
 from bot.utils.log import set_up_logger, configure_logging
 from config.settings_loader import check_settings_migration
 
-__version__ = "3.4.0"
+__version__ = "3.5.0-beta.1"
 
 
 def parse_args():
