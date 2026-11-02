@@ -10,45 +10,46 @@ This bot allows users to add movies to Radarr and series to Sonarr via Telegram 
 
 ### Configure
 
-Copy `settings-sample.py` to `data/settings.py`, and edit the settings within the file as necessary.
+Configure Searcharr with `data/settings.py`, environment variables, or both.
 
-> **Upgrading from an earlier version?** Searcharr will automatically copy your existing root `settings.py` into `data/` on first run. After confirming everything works, you can remove the old root `settings.py` volume mapping from your `docker-compose.yml`.
+**Environment-variable support is available in 3.5.0-beta.1 on the `beta` branch and the `toddrob/searcharr:beta` image. The stable `latest` image will gain it in the next release.** Existing file-based installations continue to work.
 
-Detailed descriptions of the available settings are available on the [wiki](https://github.com/toddrob99/searcharr/wiki/Configuration-::-settings.py). 
+For a settings file, copy `settings-sample.py` to `data/settings.py` and edit its values. For environment-only setup, no settings file is required. Every supported environment variable starts with `SEARCHARR_`, for example `SEARCHARR_TGRAM_TOKEN` and `SEARCHARR_SONARR_URL`. Booleans accept `true/false`; lists use JSON arrays such as `["series","tv"]` or `[]`.
 
-You are required to update the following settings, at minimum:
+The priority is **environment variables > `data/settings.py` > built-in defaults**. An unset variable falls back; an empty string is an explicit override. Use `[]` for an empty list.
 
-* Searcharr Bot > Password
-* Telegram Bot > Token (see [Telegram Bot Setup Instructions](https://core.telegram.org/bots#6-botfather))
-* Sonarr > URL, API Key, Quality Profile ID
-* Radarr > URL, API Key, Quality Profile ID
+> **Upgrading from a root `settings.py`?** Searcharr automatically copies it into `data/` if `data/settings.py` does not exist. For environment-only migration, rename both copies as backups and remove any old individual settings-file mount. Keep the data volume for the database, then recreate the container to apply environment changes.
+
+Set the Telegram token and each enabled service's URL and API key. Both Sonarr and Radarr default to enabled; disable any unused service. Set a regular-user password and a distinct administrator password if you want password-protected authentication and admin management.
+
+See the [configuration reference](https://github.com/toddrob99/searcharr/wiki/Configuration-::-settings.py) for all settings and defaults, and the [environment-variable guide](https://github.com/toddrob99/searcharr/wiki/Environment-Variables) for naming, Compose examples, and migration.
 
 ### Docker & Docker-Compose
 
 Docker is the suggested method to run Searcharr. Be sure to map the following in your Docker container:
 
-* Data folder (settings + database) to /app/data
+* Data folder (database and optional settings) to /app/data
 * Log folder to /app/logs
 
-A docker-compose.yml file is provided for your convenience. Update the volume mappings listed above, and then run `docker-compose up -d` to start Searcharr.
+A docker-compose.yml file is provided for your convenience. Update the volume mappings listed above, and then run `docker compose up -d` to start Searcharr.
 
 ### Run from Source
 
-If running from source, use Python 3.8.3+, install requirements using `python -m pip install -r requirements.txt`, and then run `searcharr.py`.
+If running from source, use Python 3.10+, install requirements using `python -m pip install -r requirements.txt`, and then run `searcharr.py`.
 
 ## Use
 
 ### Authenticate
 
-Send a private message to your bot saying `/start <password>` where `<password>` is the value of `searcharr_password` in `settings.py`. For admin access, instead say `/start <admin_password>` where `<admin_password>` is the value of `searcharr_admin_password` in `settings.py`. An authenticated user can add admin access by re-authenticating using the admin password. Re-authenticating with the non-admin password will not remove a user's admin access. Admin access must be removed by an admin using the `/users` command, or manually in the database.
+Send a private message to your bot saying `/start <password>` where `<password>` is the value of `searcharr_password` in your configuration. For admin access, instead say `/start <admin_password>` where `<admin_password>` is the value of `searcharr_admin_password` in your configuration. An authenticated user can add admin access by re-authenticating using the admin password. Re-authenticating with the non-admin password will not remove a user's admin access. Admin access must be removed by an admin using the `/users` command, or manually in the database.
 
 **Caution**: Authentication via `/start` command will work in a group chat, but then everyone else in the group will see the password. If not all group members should be allowed to use the bot, then be sure to authenticate in a private message.
 
 **Double Caution**: Do not authenticate as an admin in a group chat. Always use a private message with your bot.
 
-### Search & Add a Series to Sonar or a Movie to Radarr
+### Search & Add a Series to Sonarr or a Movie to Radarr
 
-Send the bot a (private or group) message saying `/series <title>` or `/movie <title>` (replace with custom command aliases, as configured in `settings.py`). The bot will reply with information about the first result, along with buttons to move forward and back within the search results, pop out to tvdb, TMDB, or IMDb, add the current series/movie to Sonarr/Radarr, or cancel the search. When you click the button to add the series/movie to Sonarr/Radarr, the bot will ask what root folder to put the series/movie in, then what quality profile to use--unless you have only one root folder or quality profile enabled in Searcharr settings, in which case it will skip those steps and add the series/movie straight away.
+Send the bot a (private or group) message saying `/series <title>` or `/movie <title>` (replace with custom command aliases, as configured in your configuration). The bot will reply with information about the first result, along with buttons to move forward and back within the search results, pop out to tvdb, TMDB, or IMDb, add the current series/movie to Sonarr/Radarr, or cancel the search. When you click the button to add the series/movie to Sonarr/Radarr, the bot will ask what root folder to put the series/movie in, then what quality profile to use--unless you have only one root folder or quality profile enabled in Searcharr settings, in which case it will skip those steps and add the series/movie straight away.
 
 ### Manage Users
 
@@ -60,7 +61,7 @@ Authenticate by saying `/start <password>` (or `/start@bot_username <password>` 
 
 ![Authenticate](https://github.com/toddrob99/searcharr/blob/main/screenshots/authenticate.png?raw=true)
 
-Search for movie using `/movie <title>` or series using `/series <title>` (behavior is the same for series and movies) (use custom commands configured in `settings.py` if applicable). Buttons will appear to open the series/movie info in tvdb, IMDb, or TVDB when those ids are available.
+Search for movie using `/movie <title>` or series using `/series <title>` (behavior is the same for series and movies) (use custom commands configured in your configuration if applicable). Buttons will appear to open the series/movie info in tvdb, IMDb, or TVDB when those ids are available.
 
 ![Search Result](https://github.com/toddrob99/searcharr/blob/main/screenshots/add.png?raw=true)
 
@@ -72,7 +73,7 @@ If Searcharr has multiple root folders configured, you will be prompted to selec
 
 ![Choose Root Folder](https://github.com/toddrob99/searcharr/blob/main/screenshots/choose-root-folder.png?raw=true)
 
-If Searcharr has multiple quality profiles configured, you will be prompted to select a root folder after selecting a quality profile:
+If Searcharr has multiple quality profiles configured, you will be prompted to select a quality profile after selecting a root folder:
 
 ![Choose Quality Profile](https://github.com/toddrob99/searcharr/blob/main/screenshots/choose-quality-profile.png?raw=true)
 

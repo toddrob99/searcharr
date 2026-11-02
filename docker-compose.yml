@@ -8,5 +8,43 @@ services:
       - ./logs:/app/logs
     environment:
       - TZ=America/New_York
+      # Optional configuration overrides (3.5.0-beta.1+; use the beta image until release).
+      # Uncomment only values you want to set; environment > data/settings.py > defaults.
+      # For env-only setup, supply credentials and rename both root and data/settings.py.
+      # Keep the data volume for the database. Full guide:
+      # https://github.com/toddrob99/searcharr/wiki/Environment-Variables
+      # - SEARCHARR_PASSWORD=choose-a-user-password
+      # - SEARCHARR_ADMIN_PASSWORD=choose-an-admin-password
+      # - SEARCHARR_LANGUAGE=en-us
+      # - SEARCHARR_START_COMMAND_ALIASES=["start"]
+      # - SEARCHARR_HELP_COMMAND_ALIASES=["help"]
+      # - SEARCHARR_USERS_COMMAND_ALIASES=["users"]
+      # - SEARCHARR_TGRAM_TOKEN=replace-with-bot-token
+      # - SEARCHARR_SONARR_ENABLED=true
+      # - SEARCHARR_SONARR_URL=http://your-nas:8989
+      # - SEARCHARR_SONARR_API_KEY=replace-with-sonarr-api-key
+      # - SEARCHARR_SONARR_QUALITY_PROFILE_ID=["HD - 720p/1080p"]
+      # - SEARCHARR_SONARR_ADD_MONITORED=true
+      # - SEARCHARR_SONARR_SEARCH_ON_ADD=true
+      # - SEARCHARR_SONARR_TAG_WITH_USERNAME=true
+      # - SEARCHARR_SONARR_FORCED_TAGS=[]
+      # - SEARCHARR_SONARR_ALLOW_USER_TO_SELECT_TAGS=true
+      # - SEARCHARR_SONARR_USER_SELECTABLE_TAGS=[]
+      # - SEARCHARR_SONARR_SERIES_COMMAND_ALIASES=["series"]
+      # - SEARCHARR_SONARR_SERIES_PATHS=[]
+      # - SEARCHARR_SONARR_SEASON_MONITOR_PROMPT=false
+      # - SEARCHARR_RADARR_ENABLED=true
+      # - SEARCHARR_RADARR_URL=http://your-nas:7878
+      # - SEARCHARR_RADARR_API_KEY=replace-with-radarr-api-key
+      # - SEARCHARR_RADARR_QUALITY_PROFILE_ID=["HD - 720p/1080p"]
+      # - SEARCHARR_RADARR_ADD_MONITORED=true
+      # - SEARCHARR_RADARR_SEARCH_ON_ADD=true
+      # - SEARCHARR_RADARR_TAG_WITH_USERNAME=true
+      # - SEARCHARR_RADARR_FORCED_TAGS=[]
+      # - SEARCHARR_RADARR_ALLOW_USER_TO_SELECT_TAGS=true
+      # - SEARCHARR_RADARR_USER_SELECTABLE_TAGS=[]
+      # - SEARCHARR_RADARR_MIN_AVAILABILITY=released
+      # - SEARCHARR_RADARR_MOVIE_COMMAND_ALIASES=["movie"]
+      # - SEARCHARR_RADARR_MOVIE_PATHS=[]
     restart: unless-stopped
     network_mode: host
